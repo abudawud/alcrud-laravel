@@ -1,0 +1,32 @@
+{
+    "name": "abudawud/alcrud-laravel",
+    "description": "Laravel CRUD based on AdminLTE Template",
+    "keywords": [
+        "laravel",
+        "adminlte",
+        "crud"
+    ],
+    "authors": [
+        {
+            "name": "Waris Al Hafidz",
+            "email": "warishafidz@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "AbuDawud\\AlCrudLaravel\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "AbuDawud\\AlCrudLaravel\\AlCrudLaravelProvider"
+            ]
+        }
+    },
+    "require": {
+        "php": "^8.1",
+        "jeroennoten/laravel-adminlte": "^3.9.0",
+        "laravel/framework": "^10.10"
+    }
+}
