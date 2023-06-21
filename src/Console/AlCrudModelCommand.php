@@ -35,7 +35,7 @@ class AlCrudModelCommand extends Command
     {
         $module = $this->argument('module');
         $parentModelClass = config('alcrud.parent_model');
-        $parentModel = end(explode("\\", $parentModelClass));
+        $parentModel = array_reverse(explode("\\", $parentModelClass))[0];
 
         $model = $this->option('model');
         if (empty($model)) {
