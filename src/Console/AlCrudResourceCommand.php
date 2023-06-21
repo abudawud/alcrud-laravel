@@ -5,7 +5,7 @@ namespace AbuDawud\AlCrudLaravel\Console;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
 
-class AlCrudResourceCrud extends Command
+class AlCrudResourceCommand extends Command
 {
     use CanManipulateFiles;
 
@@ -26,7 +26,7 @@ class AlCrudResourceCrud extends Command
      *
      * @var string
      */
-    protected $description = 'Buat resource yang dibutuhkan SIMBVCA v3';
+    protected $description = 'Generate resource';
 
     /**
      * Execute the console command.

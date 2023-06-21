@@ -24,7 +24,7 @@ trait CanManipulateFiles
     {
         $filesystem = app(Filesystem::class);
 
-        if (! $this->fileExists($stubPath = base_path("stubs/{$stub}.stub"))) {
+        if (! $this->fileExists($stubPath = base_path("stubs/{$stub}.stub")) || !$this->fileExists($stubPath = $this->packagePath("stubs/{$stub}.stub"))) {
             $this->error("stub file: $stubPath not exist.");
         }
 
@@ -80,5 +80,10 @@ trait CanManipulateFiles
         } else {
             $filesystem->put($path, $contents);
         }
+    }
+
+    private function packagePath($path)
+    {
+        return __DIR__ . "/../$path";
     }
 }

@@ -20,7 +20,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "AbuDawud\\AlCrudLaravel\\AlCrudLaravelProvider"
+                "AbuDawud\\AlCrudLaravel\\AlCrudLaravelServiceProvider"
             ]
         }
     },

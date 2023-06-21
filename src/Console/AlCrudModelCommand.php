@@ -5,7 +5,7 @@ namespace AbuDawud\AlCrudLaravel\Console;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
 
-class AlCrudModel extends Command
+class AlCrudModelCommand extends Command
 {
     use CanManipulateFiles;
 
@@ -14,7 +14,7 @@ class AlCrudModel extends Command
      *
      * @var string
      */
-    protected $signature = 'alcrud:model {module}
+    protected $signature = 'alcrud:model {module?}
     {--m|model= : nama model}
     {--with-migration : buat file migrasi}
     {--force : timpa file jika sudah ada}';
@@ -24,7 +24,7 @@ class AlCrudModel extends Command
      *
      * @var string
      */
-    protected $description = 'Buat model';
+    protected $description = 'Generate model';
 
     /**
      * Execute the console command.
@@ -34,6 +34,8 @@ class AlCrudModel extends Command
     public function handle()
     {
         $module = $this->argument('module');
+        $parentModelClass = config('alcrud.parent_model');
+        $parentModel = end(explode("\\", $parentModelClass));
 
         $model = $this->option('model');
         if (empty($model)) {
@@ -42,8 +44,15 @@ class AlCrudModel extends Command
             return static::INVALID;
         }
 
-        $moduleApp = Str::ucfirst($module);
-        $modelFile = app_path("Models/{$moduleApp}/{$model}.php");
+        if (empty($module)) {
+            $moduleAppClass = "";
+            $moduleAppFile = "";
+        } else {
+            $moduleAppClass = "\\{$module}";
+            $moduleAppFile = "/{$module}";
+        }
+
+        $modelFile = app_path("Models{$moduleAppFile}/{$model}.php");
         if (! $this->option('force') && $this->checkForCollision([
             $modelFile,
         ])) {
@@ -53,17 +62,17 @@ class AlCrudModel extends Command
         }
 
         $this->writeStubToApp('model', $modelFile, [
-            'namespace' => "App\\Models\\{$moduleApp}",
+            'namespace' => "App\\Models{$moduleAppClass}",
             'class' => $model,
-            'parentModelClass' => "App\\Models\\{$moduleApp}Model",
-            'parentModel' => "{$moduleApp}Model",
+            'parentModelClass' => $parentModelClass,
+            'parentModel' => $parentModel,
         ]);
 
         if ($this->option('with-migration')) {
             $table = Str::of($model)->plural()->snake();
             $this->call('make:migration', [
                 'name' => "create_{$table}_table",
-                '--path' => "database/migrations/{$module}",
+                '--path' => "database/migrations{$moduleAppFile}",
             ]);
         }
     }
