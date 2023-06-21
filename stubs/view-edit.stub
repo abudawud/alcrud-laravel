@@ -1,0 +1,5 @@
+<form class="form-crud" action="{{ route('{{ routeView }}.update', $record) }}" method="post">
+    {!! Form::hidden('_method', 'PATCH') !!}
+    @include('{{ routeView }}.form')
+</form>
+

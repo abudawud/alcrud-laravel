@@ -1,0 +1,10 @@
+    </div>
+    <div class="card-footer need-delete">
+        <a href='{{ route('{{ routeView }}.index') }}' class='btn btn-secondary'>Kembali</a>
+        <a href="{{ route('{{ routeView }}.edit', $record->{{ keyName }}) }}" class="btn bg-warning text-dark mx-1 float-right"><span class="fas fa-pencil-alt"></span> Update</a>
+        <a href="#" data-redirect="{{ route('{{ routeView }}.index') }}" class="btn btn-danger bg-danger float-right btn-delete"><span class="fas fa-trash"></span> Hapus</a>
+    </div>
+</div>
+
+<x-modal-crud title="Kelompok Tani" tableId="#datatable" />
+@stop

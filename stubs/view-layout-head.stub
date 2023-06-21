@@ -1,0 +1,24 @@
+@extends('adminlte::page')
+
+@section('title', '{{ title }}')
+@section('content_header')
+    <h1 class="m-0 text-dark">{{ title }}</h1>
+@stop
+
+@push('css')
+@endpush
+
+@section('content')
+<div class="card">
+    <h5 class="card-header bg-primary"><span class="fas fa-file-alt"></span> {{ title }}</h5>
+    <div class="card-body">
+        @if (count($errors) > 0)
+        <div class="alert alert-danger">
+            <strong>Maaf!</strong> Ada data yang belum sesuai.<br>
+            <ul>
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+        @endif

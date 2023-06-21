@@ -1,0 +1,3 @@
+<form class="form-crud" action="{{ route('{{ routeView }}.store') }}" method="post">
+    @include('{{ routeView }}.form')
+</form>

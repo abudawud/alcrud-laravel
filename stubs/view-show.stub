@@ -1,0 +1,4 @@
+        <table class="table table-sm table-bordered table-stripped">
+            <tbody>{{ rowInfo }}
+            </tbody>
+        </table>

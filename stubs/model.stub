@@ -1,0 +1,26 @@
+<?php
+
+namespace {{ namespace }};
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use {{ parentModelClass }};
+
+class {{ class }} extends {{ parentModel }}
+{
+    use HasFactory;
+
+    // overide default value
+    // protected $table = "nama_tabel";
+    // protected $primaryKey = "nama_primary_key";
+    // enable when not using incrementing field
+    // public $incrementing = false;
+
+    public $fillable = [
+    ];
+
+    public $displayable = [
+    ];
+
+    const VALIDATION_RULES = [
+    ];
+}

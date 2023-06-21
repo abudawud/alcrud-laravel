@@ -1,0 +1,10 @@
+@push('js')
+<script>
+    $(document).ready(function() {
+        $('button[type=submit]').on('click', function() {
+            $(this).attr('disabled', true);
+            $('form.form-crud').submit();
+        })
+    })
+</script>
+@endpush

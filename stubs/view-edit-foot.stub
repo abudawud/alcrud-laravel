@@ -1,0 +1,7 @@
+    </div>
+    <div class="card-footer">
+        <a href='{{ route('{{ routeView }}.show', $record->{{ keyName }}) }}' class='btn btn-secondary'>Batal</a>
+        <button type='submit' class='btn btn-primary float-right btn-submit'>Simpan</button>
+    </div>
+</div>
+@stop

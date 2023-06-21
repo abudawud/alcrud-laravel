@@ -1,0 +1,95 @@
+<?php
+
+namespace {{ namespace }};
+
+use Illuminate\Auth\Access\HandlesAuthorization;
+use {{ modelClass }};
+use {{ modelUserClass }};
+
+class {{ class }}
+{
+    use HandlesAuthorization;
+    const POLICY_NAME = "{{ policyName }}";
+
+    /**
+     * Determine whether the user can view any models.
+     *
+     * @param  {{ modelUser }}  $user
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function viewAny({{ modelUser }} $user)
+    {
+        return $user->can(self::POLICY_NAME . ".viewAny");
+    }
+
+    /**
+     * Determine whether the user can view the model.
+     *
+     * @param  {{ modelUser }}  $user
+     * @param  {{ model }}  $model
+     * @return Illuminate\Auth\Access\Response|bool
+     */
+    public function view({{ modelUser }} $user, {{ model }} $model)
+    {
+        return $user->can(self::POLICY_NAME . ".view");
+    }
+
+    /**
+     * Determine whether the user can create models.
+     *
+     * @param  {{ modelUser }}  $user
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function create({{ modelUser }} $user)
+    {
+        return $user->can(self::POLICY_NAME . ".create");
+    }
+
+    /**
+     * Determine whether the user can update the model.
+     *
+     * @param  {{ modelUser }}  $user
+     * @param  {{ model }}  $model
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function update({{ modelUser }} $user, {{ model }} $model)
+    {
+        return $user->can(self::POLICY_NAME . ".update");
+    }
+
+    /**
+     * Determine whether the user can delete the model.
+     *
+     * @param  {{ modelUser }}  $user
+     * @param  {{ model }}  $model
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function delete({{ modelUser }} $user, {{ model }} $model)
+    {
+        return $user->can(self::POLICY_NAME . ".delete");
+    }
+
+    /**
+     * Determine whether the user can restore the model.
+     *
+     * @param  {{ modelUser }}  $user
+     * @param  {{ model }}  $model
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function restore({{ modelUser }} $user, {{ model }} $model)
+    {
+        return $user->can(self::POLICY_NAME . ".restore");
+    }
+
+    /**
+     * Determine whether the user can permanently delete the model.
+     *
+     * @param  \{{ modelUser }}  $user
+     * @param  \{{ model }}  $model
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function forceDelete({{ modelUser }} $user, {{ model }} $model)
+    {
+        return $user->can(self::POLICY_NAME . ".forceDelete");
+    }
+}

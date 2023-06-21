@@ -1,0 +1,181 @@
+<?php
+
+namespace {{ namespace }};
+
+use {{ modelClass }};
+use {{ updateRequestClass }};
+use {{ storeRequestClass }};
+use {{ policyClass }};
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+
+class {{ class }} extends Controller
+{
+    public function __construct()
+    {
+        parent::__construct();
+        $this->authorizeResource({{ model }}::class);
+    }
+
+    protected function buildQuery()
+    {
+      return {{ model }}::query()
+        ->select((new {{ model }})->getDisplayableFields());
+    }
+
+    protected function buildDatatable($query)
+    {
+      return datatables($query);
+        // ->addColumn("firstCol", function ({{ model }} $record) {
+        //   return $record->field;
+        // })
+        // ->addColumn("secondCol", function ({{ model }} $record) {
+        //   return $record->field;
+        // });
+    }
+
+    public function json()
+    {
+      $query = $this->buildQuery()
+        ->limit(20);
+      return $this->buildDatatable($query)->make(true);
+    }
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index(Request $request)
+    {
+        $user = auth()->user();
+        if ($request->ajax()) {
+            return $this->buildDatatable($this->buildQuery())
+                ->addColumn('actions', function ({{ model }} $record) use ($user) {
+                    $actions = [
+                      $user->can({{ policy }}::POLICY_NAME.".view") ? "<a href='" . route("{{ routeView }}.show", $record->{{ keyName }}) . "' class='btn btn-xs btn-primary {{ buttonMode }}' title='Show'><i class='fas fa-eye'></i></a>" : '', // show
+                      $user->can({{ policy }}::POLICY_NAME.".update") ? "<a href='" . route("{{ routeView }}.edit", $record->{{ keyName }}) . "' class='btn btn-xs btn-warning {{ buttonMode }}' title='Edit'><i class='fas fa-pencil-alt'></i></a>" : '', // edit
+                      $user->can({{ policy }}::POLICY_NAME.".delete") ? "<a href='" . route("{{ routeView }}.destroy", $record->{{ keyName }}) . "' class='btn btn-xs btn-danger btn-delete' title='Delete'><i class='fas fa-trash'></i></a>" : '', // delete
+                    ];
+
+                    return '<div class="btn-group">' . implode('', $actions) . '</div>';
+                })
+                ->rawColumns(['actions'])
+                ->make(true);
+        } else {
+            return view('{{ routeView }}.index');
+        }
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create(Request $request)
+    {
+      $view = view('{{ routeView }}.create', ['record' => null]);
+      if ($request->ajax()) {
+        return response()->json([
+          'title' => "Tambah {{ title }}",
+          'content' => $view->render(),
+          'footer' => '<button type="submit" class="btn btn-primary">Simpan</button>',
+        ]);
+      } else {
+        return $view;
+      }
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  {{ storeRequest }}  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store({{ storeRequest }} $request)
+    {
+        {{ model }}::create($request->validated() + ['created_by' => auth()->id()]);
+        if ($request->ajax()) {
+            return [
+                'code' => 200,
+                'message' => 'Success',
+            ];
+        } else {
+            return redirect()->route("{{ routeView }}.index");
+        }
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  {{ model }}  ${{ modelName }}
+     * @return \Illuminate\Http\Response
+     */
+    public function show(Request $request, {{ model }} ${{ modelName }})
+    {
+      $view = view('{{ routeView }}.show', ['record' => ${{ modelName }}]);
+      if ($request->ajax()) {
+        return response()->json([
+          'title' => "Lihat {{ title }}",
+          'content' => $view->render(),
+        ]);
+      } else {
+        return $view;
+      }
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  {{ model }}  ${{ modelName }}
+     * @return \Illuminate\Http\Response
+     */
+    public function edit(Request $request, {{ model }} ${{ modelName }})
+    {
+      $view = view('{{ routeView }}.edit', ['record' => ${{ modelName }}]);
+      if ($request->ajax()) {
+        return response()->json([
+          'title' => "Edit {{ title }}",
+          'content' => $view->render(),
+          'footer' => '<button type="submit" class="btn btn-primary">Simpan</button>',
+        ]);
+      } else {
+        return $view;
+      }
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  {{ updateRequest }}  $request
+     * @param  {{ model }}  ${{ modelName }}
+     * @return \Illuminate\Http\Response
+     */
+    public function update({{ updateRequest }} $request, {{ model }} ${{ modelName }})
+    {
+        ${{ modelName }}->update($request->validated());
+        if ($request->ajax()) {
+            return [
+                'code' => 200,
+                'message' => 'Success',
+            ];
+        } else {
+            return redirect()->route("{{ routeView }}.index");
+        }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  {{ model }}  ${{ modelName }}
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy({{ model }} ${{ modelName }})
+    {
+        ${{ modelName }}->delete();
+        return [
+            'code' => 200,
+            'message' => 'Success',
+        ];
+    }
+}
