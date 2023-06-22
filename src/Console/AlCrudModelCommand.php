@@ -71,7 +71,7 @@ class AlCrudModelCommand extends Command
                 $fillable = [];
                 foreach(array_keys($columns) as $col) {
                     $col = str_replace('`', '', $col);
-                    $fillable = "'{$col}'";
+                    $fillable[] = "'{$col}'";
                 }
                 $fillable = implode("\n        ", $fillable);
             }
