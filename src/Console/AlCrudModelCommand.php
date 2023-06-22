@@ -18,7 +18,7 @@ class AlCrudModelCommand extends Command
     protected $signature = 'alcrud:model {module?}
     {--m|model= : nama model}
     {--with-migration : buat file migrasi}
-    {--table : nama tabel}
+    {--table= : nama tabel}
     {--force : timpa file jika sudah ada}';
 
     /**
