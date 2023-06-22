@@ -87,6 +87,6 @@ trait CanManipulateFiles
 
     private function packagePath($path)
     {
-        return __DIR__ . "/../$path";
+        return __DIR__ . "/../../$path";
     }
 }
