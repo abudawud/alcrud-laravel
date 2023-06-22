@@ -26,4 +26,9 @@ class {{ class }} extends FormRequest
     {
         return {{ model }}::VALIDATION_RULES;
     }
+
+    public function messages()
+    {
+        return {{ model }}::VALIDATION_MESSAGES;
+    }
 }

@@ -10,17 +10,17 @@ class {{ class }} extends {{ parentModel }}
     use HasFactory;
 
     // overide default value
-    // protected $table = "nama_tabel";
+    // protected $table = "{{ tableName }}";
     // protected $primaryKey = "nama_primary_key";
     // enable when not using incrementing field
     // public $incrementing = false;
 
     public $fillable = [
+        {{ fillable }}
     ];
 
-    public $displayable = [
-    ];
+    public $displayable = [];
 
-    const VALIDATION_RULES = [
-    ];
+    const VALIDATION_RULES = [];
+    const VALIDATION_MESSAGES = [];
 }

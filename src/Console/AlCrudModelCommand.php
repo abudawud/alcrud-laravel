@@ -3,6 +3,7 @@
 namespace AbuDawud\AlCrudLaravel\Console;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class AlCrudModelCommand extends Command
@@ -17,6 +18,7 @@ class AlCrudModelCommand extends Command
     protected $signature = 'alcrud:model {module?}
     {--m|model= : nama model}
     {--with-migration : buat file migrasi}
+    {--table : nama tabel}
     {--force : timpa file jika sudah ada}';
 
     /**
@@ -61,9 +63,21 @@ class AlCrudModelCommand extends Command
             return static::INVALID;
         }
 
+        $tableName = null;
+        $fillable = null;
+        if ($tableName = $this->option('table')) {
+            $sm = DB::connection()->getDoctrineSchemaManager();
+            if ($columns = $sm->listTableColumns($tableName)) {
+                $fillable = array_keys($columns);
+                $fillable = implode("\n", $fillable);
+            }
+        }
+
         $this->writeStubToApp('model', $modelFile, [
             'namespace' => "App\\Models{$moduleAppClass}",
             'class' => $model,
+            'tableName' => $tableName,
+            'fillable' => $fillable,
             'parentModelClass' => $parentModelClass,
             'parentModel' => $parentModel,
         ]);
