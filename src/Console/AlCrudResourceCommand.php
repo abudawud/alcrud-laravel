@@ -14,7 +14,7 @@ class AlCrudResourceCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'alcrud:resource {module}
+    protected $signature = 'alcrud:resource {module?}
     {--m|model= : model yang digunakan untuk membuat crud}
     {--p|policy= : kata kunci policy}
     {--t|title= : judul form crud}
@@ -36,7 +36,14 @@ class AlCrudResourceCommand extends Command
     public function handle()
     {
         $module = $this->argument('module');
-        $moduleApp = Str::ucfirst($module);
+        if (empty($module)) {
+            $moduleAppClass = "";
+            $moduleAppFile = "";
+        } else {
+            $moduleAppClass = "\\{$module}";
+            $moduleAppFile = "/{$module}";
+        }
+        $moduleAppFileSnake = Str::snake($moduleAppFile);
 
         $model = $this->option('model');
         $policyName = $this->option('policy');
@@ -49,17 +56,17 @@ class AlCrudResourceCommand extends Command
 
         $modelSnake = Str::snake($model, '-');
         // check model exist
-        if (!$this->fileExists(app_path("Models/{$moduleApp}/$model.php"))) {
+        if (!$this->fileExists(app_path("Models{$moduleAppFile}/$model.php"))) {
             $this->error('Model yg dimaksud tidak ditemukan!');
 
             return static::INVALID;
         }
 
-        $controllerFile = app_path("Http/Controllers/{$moduleApp}/{$model}Controller.php");
-        $policyFile = app_path("Policies/{$moduleApp}/{$model}Policy.php");
-        $storeRequestFile = app_path("Http/Requests/{$moduleApp}/Store{$model}Request.php");
-        $updateRequestFile = app_path("Http/Requests/{$moduleApp}/Update{$model}Request.php");
-        $viewPath = resource_path("views/{$module}/{$modelSnake}");
+        $controllerFile = app_path("Http/Controllers{$moduleAppFile}/{$model}Controller.php");
+        $policyFile = app_path("Policies{$moduleAppFile}/{$model}Policy.php");
+        $storeRequestFile = app_path("Http/Requests{$moduleAppFile}/Store{$model}Request.php");
+        $updateRequestFile = app_path("Http/Requests{$moduleAppFile}/Update{$model}Request.php");
+        $viewPath = resource_path("views{$moduleAppFileSnake}/{$modelSnake}");
         $viewIndexFile = "{$viewPath}/index.blade.php";
         $viewCreateFile = "{$viewPath}/create.blade.php";
         $viewEditFile = "{$viewPath}/edit.blade.php";
@@ -77,14 +84,14 @@ class AlCrudResourceCommand extends Command
             return static::INVALID;
         }
 
-        $modelClass = "App\\Models\\{$moduleApp}\\{$model}";
+        $modelClass = "App\\Models{$moduleAppClass}\\{$model}";
         $instance = new $modelClass;
         $this->writeStubToApp('controller', $controllerFile, [
-            'namespace' => "App\\Http\\Controllers\\{$moduleApp}",
-            'modelClass' => "App\\Models\\{$moduleApp}\\{$model}",
-            'updateRequestClass' => "App\\Http\\Requests\\{$moduleApp}\\Update{$model}Request",
-            'storeRequestClass' => "App\\Http\\Requests\\{$moduleApp}\\Store{$model}Request",
-            'policyClass' => "App\\Policies\\{$moduleApp}\\{$model}Policy",
+            'namespace' => "App\\Http\\Controllers{$moduleAppClass}",
+            'modelClass' => "App\\Models{$moduleAppClass}\\{$model}",
+            'updateRequestClass' => "App\\Http\\Requests{$moduleAppClass}\\Update{$model}Request",
+            'storeRequestClass' => "App\\Http\\Requests{$moduleAppClass}\\Store{$model}Request",
+            'policyClass' => "App\\Policies{$moduleAppClass}\\{$model}Policy",
             'class' => "{$model}Controller",
             'policy' => "{$model}Policy",
             'model' => "{$model}",
@@ -98,22 +105,22 @@ class AlCrudResourceCommand extends Command
         ]);
 
         $this->writeStubToApp('request', $updateRequestFile, [
-            'namespace' => "App\\Http\\Requests\\{$moduleApp}",
-            'modelClass' => "App\\Models\\{$moduleApp}\\{$model}",
+            'namespace' => "App\\Http\\Requests{$moduleAppClass}",
+            'modelClass' => "App\\Models{$moduleAppClass}\\{$model}",
             'class' => "Update{$model}Request",
             'model' => "{$model}",
         ]);
 
         $this->writeStubToApp('request', $storeRequestFile, [
-            'namespace' => "App\\Http\\Requests\\{$moduleApp}",
-            'modelClass' => "App\\Models\\{$moduleApp}\\{$model}",
+            'namespace' => "App\\Http\\Requests{$moduleAppClass}",
+            'modelClass' => "App\\Models{$moduleAppClass}\\{$model}",
             'class' => "Store{$model}Request",
             'model' => "{$model}",
         ]);
 
         $this->writeStubToApp('policy', $policyFile, [
-            'namespace' => "App\\Policies\\{$moduleApp}",
-            'modelClass' => "App\\Models\\{$moduleApp}\\{$model}",
+            'namespace' => "App\\Policies{$moduleAppClass}",
+            'modelClass' => "App\\Models{$moduleAppClass}\\{$model}",
             'modelUserClass' => 'App\\Models\\User',
             'modelUser' => 'User',
             'class' => "{$model}Policy",
@@ -128,7 +135,7 @@ class AlCrudResourceCommand extends Command
             'foot' => $columns->map(fn ($str) => '<th class="filter">' . Str::headline($str) . '</th>')->push('<th></th>')->prepend('<th></th>')->implode("\n                          "),
             'columns' => $columns->map(fn ($str) => ['data' => $str])->push(['data' => 'actions'])->prepend(['data' => $instance->getKeyName()])->toJson(),
             'routeView' => "{$module}.{$modelSnake}",
-            'policyClass' => "App\\Policies\\{$moduleApp}\\{$model}Policy",
+            'policyClass' => "App\\Policies{$moduleAppClass}\\{$model}Policy",
             'buttonMode' => $this->option('simple') ? 'modal-remote' : '',
         ]);
 
