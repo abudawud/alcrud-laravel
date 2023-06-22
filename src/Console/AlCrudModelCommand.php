@@ -18,7 +18,7 @@ class AlCrudModelCommand extends Command
     protected $signature = 'alcrud:model {module?}
     {--m|model= : nama model}
     {--with-migration : buat file migrasi}
-    {--table= : nama tabel}
+    {--t|table= : nama tabel}
     {--force : timpa file jika sudah ada}';
 
     /**
@@ -68,8 +68,12 @@ class AlCrudModelCommand extends Command
         if ($tableName = $this->option('table')) {
             $sm = DB::connection()->getDoctrineSchemaManager();
             if ($columns = $sm->listTableColumns($tableName)) {
-                $fillable = array_keys($columns);
-                $fillable = implode("\n", $fillable);
+                $fillable = [];
+                foreach(array_keys($columns) as $col) {
+                    $col = str_replace('`', '', $col);
+                    $fillable = "'{$col}'";
+                }
+                $fillable = implode("\n        ", $fillable);
             }
         }
 
