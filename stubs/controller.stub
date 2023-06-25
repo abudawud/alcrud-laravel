@@ -13,7 +13,6 @@ class {{ class }} extends Controller
 {
     public function __construct()
     {
-        parent::__construct();
         $this->authorizeResource({{ model }}::class);
     }
 
@@ -97,11 +96,20 @@ class {{ class }} extends Controller
         {{ model }}::create($request->validated() + ['created_by' => auth()->id()]);
         if ($request->ajax()) {
             return [
+                'notification' => [
+                    'type' => "success",
+                    'title' => 'Tambah {{ title }}',
+                    'message' => 'Berhasil menambah {{ title }}',
+                ],
                 'code' => 200,
                 'message' => 'Success',
             ];
         } else {
-            return redirect()->route("{{ routeView }}.index");
+            return redirect()->route("{{ routeView }}.index")->with('notification', [
+                'type' => "success",
+                'title' => 'Tambah {{ title }}',
+                'message' => 'Berhasil menambah data {{ title }}',
+            ]);
         }
     }
 
@@ -156,11 +164,20 @@ class {{ class }} extends Controller
         ${{ modelName }}->update($request->validated());
         if ($request->ajax()) {
             return [
+                'notification' => [
+                    'type' => "success",
+                    'title' => 'Update {{ title }}',
+                    'message' => 'Berhasil merubah {{ title }}',
+                ],
                 'code' => 200,
                 'message' => 'Success',
             ];
         } else {
-            return redirect()->route("{{ routeView }}.index");
+            return redirect()->route("{{ routeView }}.index")->with('notification', [
+                'type' => "success",
+                'title' => 'Update {{ title }}',
+                'message' => 'Berhasil merubah data {{ title }}',
+            ]);
         }
     }
 
@@ -174,6 +191,11 @@ class {{ class }} extends Controller
     {
         ${{ modelName }}->delete();
         return [
+            'notification' => [
+                'type' => "success",
+                'title' => 'Hapus {{ title }}',
+                'message' => 'Berhasil menghapus {{ title }}',
+            ],
             'code' => 200,
             'message' => 'Success',
         ];

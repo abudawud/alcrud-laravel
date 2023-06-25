@@ -73,7 +73,7 @@ class AlCrudModelCommand extends Command
                     $col = str_replace('`', '', $col);
                     $fillable[] = "'{$col}'";
                 }
-                $fillable = implode("\n        ", $fillable);
+                $fillable = implode(",\n        ", $fillable);
             }
         }
 

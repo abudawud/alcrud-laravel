@@ -39,9 +39,11 @@ class AlCrudResourceCommand extends Command
         if (empty($module)) {
             $moduleAppClass = "";
             $moduleAppFile = "";
+            $moduleRoute = "";
         } else {
             $moduleAppClass = "\\{$module}";
             $moduleAppFile = "/{$module}";
+            $moduleRoute = "{$module}.";
         }
         $moduleAppFileSnake = Str::snake($moduleAppFile);
 
@@ -97,7 +99,7 @@ class AlCrudResourceCommand extends Command
             'model' => "{$model}",
             'storeRequest' => "Store{$model}Request",
             'updateRequest' => "Update{$model}Request",
-            'routeView' => "{$module}.{$modelSnake}",
+            'routeView' => "{$moduleRoute}{$modelSnake}",
             'modelName' => Str::camel($model),
             'buttonMode' => $this->option('simple') ? 'modal-remote' : '',
             'title' => $title,
@@ -134,7 +136,7 @@ class AlCrudResourceCommand extends Command
             'head' => $columns->map(fn ($str) => '<th class="text-primary">' . Str::headline($str) . '</th>')->push('<th>Actions</th>')->prepend('<th>Id</th>')->implode("\n                          "),
             'foot' => $columns->map(fn ($str) => '<th class="filter">' . Str::headline($str) . '</th>')->push('<th></th>')->prepend('<th></th>')->implode("\n                          "),
             'columns' => $columns->map(fn ($str) => ['data' => $str])->push(['data' => 'actions'])->prepend(['data' => $instance->getKeyName()])->toJson(),
-            'routeView' => "{$module}.{$modelSnake}",
+            'routeView' => "{$moduleRoute}{$modelSnake}",
             'policyClass' => "App\\Policies{$moduleAppClass}\\{$model}Policy",
             'buttonMode' => $this->option('simple') ? 'modal-remote' : '',
         ]);
@@ -150,11 +152,11 @@ class AlCrudResourceCommand extends Command
         ]);
 
         $this->writeStubToApp('view-create', $viewCreateFile, [
-            'routeView' => "{$module}.{$modelSnake}",
+            'routeView' => "{$moduleRoute}{$modelSnake}",
         ]);
 
         $this->writeStubToApp('view-edit', $viewEditFile, [
-            'routeView' => "{$module}.{$modelSnake}",
+            'routeView' => "{$moduleRoute}{$modelSnake}",
         ]);
 
         $this->writeStubToApp('view-form', $viewFormFile, [
@@ -174,7 +176,7 @@ class AlCrudResourceCommand extends Command
             ]);
             $this->appendStubToApp('view-create-foot', $viewCreateFile, [
                 'title' => "Tambah {$title}",
-                'routeView' => "{$module}.{$modelSnake}",
+                'routeView' => "{$moduleRoute}{$modelSnake}",
                 'keyName' => $instance->getKeyName(),
             ]);
 
@@ -183,7 +185,7 @@ class AlCrudResourceCommand extends Command
             ]);
             $this->appendStubToApp('view-edit-foot', $viewEditFile, [
                 'title' => "Update {$title}",
-                'routeView' => "{$module}.{$modelSnake}",
+                'routeView' => "{$moduleRoute}{$modelSnake}",
                 'keyName' => $instance->getKeyName(),
             ]);
 
@@ -194,7 +196,7 @@ class AlCrudResourceCommand extends Command
             ]);
             $this->appendStubToApp('view-show-foot', $viewShowFile, [
                 'title' => "Lihat {$title}",
-                'routeView' => "{$module}.{$modelSnake}",
+                'routeView' => "{$moduleRoute}{$modelSnake}",
                 'keyName' => $instance->getKeyName(),
             ]);
         }

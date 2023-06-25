@@ -55,7 +55,7 @@
         </div>
     </div>
 
-    <x-modal-crud title="{{ title }}" tableId="#datatable" />
+    <x-alcrud-modal title="{{ title }}" tableId="#datatable" />
 @stop
 
 @section('js')
