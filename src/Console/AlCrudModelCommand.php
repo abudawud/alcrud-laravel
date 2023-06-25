@@ -70,6 +70,10 @@ class AlCrudModelCommand extends Command
             if ($columns = $sm->listTableColumns($tableName)) {
                 $fillable = [];
                 foreach(array_keys($columns) as $col) {
+                    if (in_array($col, ['id', 'created_at', 'updated_at'])) {
+                        continue;
+                    }
+
                     $col = str_replace('`', '', $col);
                     $fillable[] = "'{$col}'";
                 }

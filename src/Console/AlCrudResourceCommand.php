@@ -4,6 +4,8 @@ namespace AbuDawud\AlCrudLaravel\Console;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class AlCrudResourceCommand extends Command
 {
@@ -19,6 +21,7 @@ class AlCrudResourceCommand extends Command
     {--p|policy= : kata kunci policy}
     {--t|title= : judul form crud}
     {--simple : buat simple modal crud}
+    {--with-record : tambah record otomatis}
     {--force : timpa file jika sudah ada}';
 
     /**
@@ -199,6 +202,38 @@ class AlCrudResourceCommand extends Command
                 'routeView' => "{$moduleRoute}{$modelSnake}",
                 'keyName' => $instance->getKeyName(),
             ]);
+        }
+
+        if ($this->option('with-record')) {
+            foreach(['viewAny', 'view', 'update', 'create', 'delete'] as $ability) {
+                $this->createPermission($policyName, $ability);
+            }
+            $routeModel = config('alcrud.route_model');
+            $menuModel = config('alcrud.menu_model');
+            $routeModel = new $routeModel;
+            $route = $routeModel->create([
+                'module_id' => config('alcrud.default_module_id'),
+                'url' => "{$moduleAppFileSnake}{$modelSnake}",
+                'can' => "{$policyName}.viewAny",
+                'active' => true,
+            ]);
+            $menuModel = new $menuModel;
+            $menuModel->create([
+                'module_id' => config('alcrud.default_module_id'),
+                'role_id' => config('alcrud.default_role_id'),
+                'route_id' => $route->id,
+                'text' => $title,
+            ]);
+        }
+    }
+
+    private function createPermission($policy, $ability) {
+        $permission = Permission::create([
+            'name' => "{$policy}.{$ability}",
+        ]);
+        $defaultRole = Role::findById(config('alcrud.default_role_id'));
+        if ($defaultRole) {
+            $defaultRole->givePermissionTo($permission);
         }
     }
 }

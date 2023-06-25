@@ -19,8 +19,15 @@ class {{ class }} extends {{ parentModel }}
         {{ fillable }}
     ];
 
-    public $displayable = [];
+    public $displayable = [
+        {{ fillable }}
+    ];
 
-    const VALIDATION_RULES = [];
-    const VALIDATION_MESSAGES = [];
+    const VALIDATION_RULES = [
+        {{ fillable }}
+    ];
+
+    const VALIDATION_MESSAGES = [
+
+    ];
 }
