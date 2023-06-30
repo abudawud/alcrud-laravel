@@ -22,6 +22,7 @@ class AlCrudResourceCommand extends Command
     {--t|title= : judul form crud}
     {--simple : buat simple modal crud}
     {--with-record : tambah record otomatis}
+    {--with-export : tambah record otomatis}
     {--force : timpa file jika sudah ada}';
 
     /**
@@ -89,6 +90,22 @@ class AlCrudResourceCommand extends Command
             return static::INVALID;
         }
 
+        $exportHtml = null;
+        $exportJs = null;
+        $exportPhp = null;
+        if ($this->option('with-export')) {
+            $exportJs = str_replace([
+                '{{ route_export }}',
+                '{{ title }}',
+            ], [
+                "{$moduleRoute}{$modelSnake}",
+                $title,
+            ], $this->exportJs());
+            $exportHtml = $this->exportHtml();
+            $exportPhp = $this->exportPhp();
+        }
+
+
         $modelClass = "App\\Models{$moduleAppClass}\\{$model}";
         $instance = new $modelClass;
         $this->writeStubToApp('controller', $controllerFile, [
@@ -107,6 +124,7 @@ class AlCrudResourceCommand extends Command
             'buttonMode' => $this->option('simple') ? 'modal-remote' : '',
             'title' => $title,
             'keyName' => $instance->getKeyName(),
+            'exportPhp' => $exportPhp,
         ]);
 
         $this->writeStubToApp('request', $updateRequestFile, [
@@ -142,6 +160,8 @@ class AlCrudResourceCommand extends Command
             'routeView' => "{$moduleRoute}{$modelSnake}",
             'policyClass' => "App\\Policies{$moduleAppClass}\\{$model}Policy",
             'buttonMode' => $this->option('simple') ? 'modal-remote' : '',
+            'exportHtml' => $exportHtml,
+            'exportJs' => $exportJs,
         ]);
 
         $this->writeStubToApp('view-show', $viewShowFile, [
@@ -225,6 +245,118 @@ class AlCrudResourceCommand extends Command
                 'text' => $title,
             ]);
         }
+    }
+
+    private function exportHtml() {
+        return <<<HTML
+            <div class="btn-group">
+              <a class="btn btn-default dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <span class="fas fa-file-export"></span> Export Data
+              </a>
+
+              <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                <button id="btn-export-excel" title="Export Excel" class="dropdown-item"> <span class="fas fa-file-excel"></span> Excel</button>
+                <button id="btn-export-pdf" title="Export PDF" class="dropdown-item"> <span class="fas fa-file-pdf"></span> PDF</button>
+              </div>
+            </div>
+        HTML;
+    }
+
+    private function exportJs() {
+        return <<<JS
+            $('#btn-export-excel').on('click', function (e) {
+                $('#btn-export-excel').attr('disabled', true);
+                const request = new XMLHttpRequest();
+                const params = api.ajax.params();
+                // remove limit
+                delete params.start;
+                delete params.limit;
+                params._token = "{{ csrf_token() }}";
+                request.open("POST", '{{ route("{{ route_export }}.export", ['type' => 'excel']) }}');
+                request.responseType = 'blob';
+                request.setRequestHeader("Content-Type", "application/json")
+                request.send(JSON.stringify(params));
+                request.onload = function(e) {
+                    if (this.status == 200) {
+                        const blob = new Blob([this.response]);
+                        let a = document.createElement("a");
+                        a.style = "display: none";
+                        document.body.appendChild(a);
+                        //Create a DOMString representing the blob and point the link element towards it
+                        let url = window.URL.createObjectURL(blob);
+                        a.href = url;
+                        a.download = '{{ title }}.xlsx';
+                        //programatically click the link to trigger the download
+                        a.click();
+                        //release the reference to the file by revoking the Object URL
+                        window.URL.revokeObjectURL(url);
+                        // remove a
+                        document.body.removeChild(a);
+                        $('#btn-export-excel').attr('disabled', false);
+                    } else {
+                        alert("Gagal export, terapkan filter agar data tidak terlalu banyak!");
+                        $('#btn-export-excel').attr('disabled', false);
+                    }
+                }
+            })
+
+            $('#btn-export-pdf').on('click', function (e) {
+                $('#btn-export-pdf').attr('disabled', true);
+                const request = new XMLHttpRequest();
+                const params = api.ajax.params();
+                // remove limit
+                delete params.start;
+                delete params.limit;
+                params._token = "{{ csrf_token() }}";
+                request.open("POST", '{{ route("{{ route_export }}.export", ['type' => 'pdf']) }}');
+                request.responseType = 'blob';
+                request.setRequestHeader("Content-Type", "application/json")
+                request.send(JSON.stringify(params));
+                request.onload = function(e) {
+                    if (this.status == 200) {
+                        const blob = new Blob([this.response]);
+                        let a = document.createElement("a");
+                        a.style = "display: none";
+                        document.body.appendChild(a);
+                        //Create a DOMString representing the blob and point the link element towards it
+                        let url = window.URL.createObjectURL(blob);
+                        a.href = url;
+                        a.download = '{{ title }}.pdf';
+                        //programatically click the link to trigger the download
+                        a.click();
+                        //release the reference to the file by revoking the Object URL
+                        window.URL.revokeObjectURL(url);
+                        // remove a
+                        document.body.removeChild(a);
+                        $('#btn-export-pdf').attr('disabled', false);
+                    } else {
+                        alert("Gagal export, terapkan filter agar data tidak terlalu banyak!");
+                        $('#btn-export-pdf').attr('disabled', false);
+                    }
+                }
+            })
+        JS;
+    }
+
+    private function exportPhp() {
+        return '
+            public function export(Request $request)
+            {
+                if ($request->get("type") == "excel") {
+                    return $this->exportExcel();
+                } else if ($request->get("type") == "pdf") {
+                    return $this->exportPdf();
+                } else {
+                    abort(403, "Unknown filetype!");
+                }
+            }
+
+            private function exportExcel()
+            {
+                $rpb = $this->buildDatatable($this->buildQuery())->toArray();
+                $exporter = new MsProdukExport($rpb["data"]);
+                return Excel::download($exporter, "ms-produk.xlsx");
+            }';
     }
 
     private function createPermission($policy, $ability) {

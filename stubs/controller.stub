@@ -73,7 +73,9 @@ class {{ class }} extends Controller
      */
     public function create(Request $request)
     {
-      $view = view('{{ routeView }}.create', ['record' => null]);
+      $view = view('{{ routeView }}.create', [
+        'record' => null
+      ] + $this->formData());
       if ($request->ajax()) {
         return response()->json([
           'title' => "Tambah {{ title }}",
@@ -93,7 +95,7 @@ class {{ class }} extends Controller
      */
     public function store({{ storeRequest }} $request)
     {
-        {{ model }}::create($request->validated() + ['created_by' => auth()->id()]);
+        {{ model }}::create(['created_by' => auth()->id()] + $request->validated());
         if ($request->ajax()) {
             return [
                 'notification' => [
@@ -140,7 +142,9 @@ class {{ class }} extends Controller
      */
     public function edit(Request $request, {{ model }} ${{ modelName }})
     {
-      $view = view('{{ routeView }}.edit', ['record' => ${{ modelName }}]);
+      $view = view('{{ routeView }}.edit', [
+        'record' => ${{ modelName }}
+      ] + $this->formData());
       if ($request->ajax()) {
         return response()->json([
           'title' => "Edit {{ title }}",
@@ -198,6 +202,14 @@ class {{ class }} extends Controller
             ],
             'code' => 200,
             'message' => 'Success',
+        ];
+    }
+
+    {{ exportPhp }}
+
+    private function formData() {
+        return [
+
         ];
     }
 }

@@ -4,6 +4,7 @@ namespace AbuDawud\AlCrudLaravel;
 
 use AbuDawud\AlCrudLaravel\Console\AlCrudModelCommand;
 use AbuDawud\AlCrudLaravel\Console\AlCrudResourceCommand;
+use AbuDawud\AlCrudLaravel\Views\Components\ICheck;
 use AbuDawud\AlCrudLaravel\Views\Components\Modal;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider as BaseServiceProvider;
@@ -24,9 +25,8 @@ class AlCrudLaravelServiceProvider extends BaseServiceProvider
      */
     public function boot()
     {
-        Blade::component('alcrud-modal', Modal::class);
         $this->loadViews();
-        // $this->loadComponents();
+        $this->loadComponents();
         $this->registerCommands();
         $this->loadConfig();
     }
@@ -45,6 +45,7 @@ class AlCrudLaravelServiceProvider extends BaseServiceProvider
     private function loadComponents() {
         $this->loadViewComponentsAs($this->pkgPrefix, [
             'modal' => Modal::class,
+            'i-check' => ICheck::class,
         ]);
     }
 

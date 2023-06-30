@@ -27,6 +27,7 @@
                                 <a id="btn-create" href="{{ route('{{ routeView }}.create') }}" class="btn btn-primary {{ buttonMode }}"> <span
                                         class="fas fa-plus"></span></a>
                             @endcan
+                            {{ exportHtml }}
                             <a id="btn-reset" class="btn btn-default"> <span class="fas fa-sync"></span></a>
                         </div>
                     </div>
@@ -104,6 +105,8 @@
                         });
                     });
             });
+
+            {{ exportJs }}
         });
     </script>
 @stop
