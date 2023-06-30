@@ -1,0 +1,20 @@
+@extends('pdf.master', [
+    'doc_title' => '{{ title }}',
+])
+
+@section('content')
+<table class="table table-bordered" width="100%">
+    <thead>
+        <tr>
+            {{ head }}
+        </tr>
+    </thead>
+    <tbody>
+        @foreach ($records as $record)
+            <tr>
+                {{ columnExport }}
+            </tr>
+        @endforeach
+    </tbody>
+</table>
+@stop

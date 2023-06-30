@@ -1,0 +1,14 @@
+<table>
+    <thead>
+        <tr>
+            {{ head }}
+        </tr>
+    </thead>
+    <tbody>
+        @foreach ($records as $record)
+            <tr>
+                {{ columnExport }}
+            </tr>
+        @endforeach
+    </tbody>
+</table>

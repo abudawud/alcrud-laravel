@@ -90,6 +90,10 @@ class AlCrudResourceCommand extends Command
             return static::INVALID;
         }
 
+
+        $modelClass = "App\\Models{$moduleAppClass}\\{$model}";
+        $instance = new $modelClass;
+        $columns = collect($instance->displayable);
         $exportHtml = null;
         $exportJs = null;
         $exportPhp = null;
@@ -103,11 +107,23 @@ class AlCrudResourceCommand extends Command
             ], $this->exportJs());
             $exportHtml = $this->exportHtml();
             $exportPhp = $this->exportPhp();
+
+            // Export
+            $targetFile = app_path("Exports{$moduleAppFile}/{$model}Export.php");
+            $this->writeStubToApp('export', $targetFile, [
+                'namespace' => "App\\Http\\Exports{$moduleAppClass}",
+                'class' => "{$model}Export",
+                'routeView' => "{$moduleRoute}{$modelSnake}",
+            ]);
+
+            // Excel template
+            $targetFile = "{$viewPath}/export/excel.blade.php";
+            $this->writeStubToApp('view-export-excel', $targetFile, [
+                'head' => $columns->map(fn ($str) => '<th class="text-primary">' . Str::headline($str) . '</th>')->implode("\n                          "),
+                'columnExport' => $columns->map(fn ($str) => '<td>{{ $record[\''. $str .'\'] }}</td>')->implode("\n          "),
+            ]);
         }
 
-
-        $modelClass = "App\\Models{$moduleAppClass}\\{$model}";
-        $instance = new $modelClass;
         $this->writeStubToApp('controller', $controllerFile, [
             'namespace' => "App\\Http\\Controllers{$moduleAppClass}",
             'modelClass' => "App\\Models{$moduleAppClass}\\{$model}",
@@ -151,7 +167,6 @@ class AlCrudResourceCommand extends Command
             'model' => "{$model}",
         ]);
 
-        $columns = collect($instance->displayable);
         $this->writeStubToApp('view-index', $viewIndexFile, [
             'title' => $title,
             'head' => $columns->map(fn ($str) => '<th class="text-primary">' . Str::headline($str) . '</th>')->push('<th>Actions</th>')->prepend('<th>Id</th>')->implode("\n                          "),
