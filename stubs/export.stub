@@ -16,7 +16,7 @@ class {{ class }} implements FromView, ShouldAutoSize
     }
 
     public function view(): View {
-        return view('{{ routeView }}.excel', [
+        return view('{{ routeView }}.export.excel', [
             'records' => $this->records,
         ]);
     }

@@ -8,11 +8,13 @@ use {{ storeRequestClass }};
 use {{ policyClass }};
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+{{ useExportClass }}
 
 class {{ class }} extends Controller
 {
     public function __construct()
     {
+        parent::__construct();
         $this->authorizeResource({{ model }}::class);
     }
 

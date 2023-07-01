@@ -97,6 +97,7 @@ class AlCrudResourceCommand extends Command
         $exportHtml = null;
         $exportJs = null;
         $exportPhp = null;
+        $useExportClass = null;
         if ($this->option('with-export')) {
             $exportJs = str_replace([
                 '{{ route_export }}',
@@ -106,12 +107,25 @@ class AlCrudResourceCommand extends Command
                 $title,
             ], $this->exportJs());
             $exportHtml = $this->exportHtml();
-            $exportPhp = $this->exportPhp();
+            $exportPhp = str_replace([
+                '{{ model }}',
+                '{{ title }}',
+                '{{ routeView }}'
+            ], [
+                $model,
+                $title,
+                "{$moduleRoute}{$modelSnake}",
+            ],$this->exportPhp());
+            $useExportClass = implode("\n", [
+                "use App\\Exports{$moduleAppClass}\\{$model}Export;",
+                "use Maatwebsite\\Excel\\Facades\\Excel;",
+                "use Barryvdh\DomPDF\Facade\Pdf;",
+            ]);
 
             // Export
             $targetFile = app_path("Exports{$moduleAppFile}/{$model}Export.php");
             $this->writeStubToApp('export', $targetFile, [
-                'namespace' => "App\\Http\\Exports{$moduleAppClass}",
+                'namespace' => "App\\Exports{$moduleAppClass}",
                 'class' => "{$model}Export",
                 'routeView' => "{$moduleRoute}{$modelSnake}",
             ]);
@@ -121,6 +135,14 @@ class AlCrudResourceCommand extends Command
             $this->writeStubToApp('view-export-excel', $targetFile, [
                 'head' => $columns->map(fn ($str) => '<th class="text-primary">' . Str::headline($str) . '</th>')->implode("\n                          "),
                 'columnExport' => $columns->map(fn ($str) => '<td>{{ $record[\''. $str .'\'] }}</td>')->implode("\n          "),
+            ]);
+
+            // PDF template
+            $targetFile = "{$viewPath}/export/pdf.blade.php";
+            $this->writeStubToApp('view-export-pdf', $targetFile, [
+                'head' => $columns->map(fn ($str) => '<th class="text-primary">' . Str::headline($str) . '</th>')->implode("\n                          "),
+                'columnExport' => $columns->map(fn ($str) => '<td>{{ $record[\''. $str .'\'] }}</td>')->implode("\n          "),
+                'title' => $title,
             ]);
         }
 
@@ -141,6 +163,7 @@ class AlCrudResourceCommand extends Command
             'title' => $title,
             'keyName' => $instance->getKeyName(),
             'exportPhp' => $exportPhp,
+            'useExportClass' => $useExportClass,
         ]);
 
         $this->writeStubToApp('request', $updateRequestFile, [
@@ -237,6 +260,8 @@ class AlCrudResourceCommand extends Command
                 'routeView' => "{$moduleRoute}{$modelSnake}",
                 'keyName' => $instance->getKeyName(),
             ]);
+        } else {
+            $this->appendStubToApp('view-layout-simple-footscript', $viewFormFile, []);
         }
 
         if ($this->option('with-record')) {
@@ -355,23 +380,38 @@ class AlCrudResourceCommand extends Command
 
     private function exportPhp() {
         return '
-            public function export(Request $request)
-            {
-                if ($request->get("type") == "excel") {
-                    return $this->exportExcel();
-                } else if ($request->get("type") == "pdf") {
-                    return $this->exportPdf();
-                } else {
-                    abort(403, "Unknown filetype!");
-                }
+        public function export(Request $request)
+        {
+            if ($request->get("type") == "excel") {
+                return $this->exportExcel();
+            } else if ($request->get("type") == "pdf") {
+                return $this->exportPdf();
+            } else {
+                abort(403, "Unknown filetype!");
             }
+        }
 
-            private function exportExcel()
-            {
-                $rpb = $this->buildDatatable($this->buildQuery())->toArray();
-                $exporter = new MsProdukExport($rpb["data"]);
-                return Excel::download($exporter, "ms-produk.xlsx");
-            }';
+        private function exportExcel()
+        {
+            $data = $this->buildDatatable($this->buildQuery())->toArray();
+            $exporter = new {{ model }}Export($data["data"]);
+            return Excel::download($exporter, "{{ title }}.xlsx");
+        }
+
+        public function exportPdf()
+        {
+            $data = $this->buildDatatable($this->buildQuery())->toArray();
+            $pdf = Pdf::loadView("{{ routeView }}.export.pdf", [
+                "records" => $data["data"],
+            ]);
+            $pdf->setPaper("a4");
+            $pdf->addInfo([
+                "Title" => "{{ title }}",
+                "Author" => config("app.company_name"),
+                "Subject" => config("app.name"),
+            ]);
+            return $pdf->stream("{{ title }}.pdf");
+        }';
     }
 
     private function createPermission($policy, $ability) {
