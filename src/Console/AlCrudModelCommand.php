@@ -19,6 +19,7 @@ class AlCrudModelCommand extends Command
     {--m|model= : nama model}
     {--with-migration : buat file migrasi}
     {--t|table= : nama tabel}
+    {--c|connection= : nama koneksi}
     {--force : timpa file jika sudah ada}';
 
     /**
@@ -66,7 +67,7 @@ class AlCrudModelCommand extends Command
         $tableName = null;
         $fillable = null;
         if ($tableName = $this->option('table')) {
-            $sm = DB::connection()->getDoctrineSchemaManager();
+            $sm = DB::connection($this->option('connection'))->getDoctrineSchemaManager();
             if ($columns = $sm->listTableColumns($tableName)) {
                 $fillable = [];
                 foreach(array_keys($columns) as $col) {
