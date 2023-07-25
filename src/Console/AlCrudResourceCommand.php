@@ -44,12 +44,13 @@ class AlCrudResourceCommand extends Command
             $moduleAppClass = "";
             $moduleAppFile = "";
             $moduleRoute = "";
+            $moduleAppFileSnake = "";
         } else {
-            $moduleAppClass = "\\{$module}";
-            $moduleAppFile = "/{$module}";
+            $moduleAppClass = "\\" . ucfirst($module);
+            $moduleAppFile = "/" . ucfirst($module);
             $moduleRoute = "{$module}.";
+            $moduleAppFileSnake = "/" . Str::snake($module, '-');
         }
-        $moduleAppFileSnake = Str::snake($moduleAppFile);
 
         $model = $this->option('model');
         $policyName = $this->option('policy');
@@ -93,7 +94,7 @@ class AlCrudResourceCommand extends Command
 
         $modelClass = "App\\Models{$moduleAppClass}\\{$model}";
         $instance = new $modelClass;
-        $columns = collect($instance->displayable);
+        $columns = collect($instance->visible);
         $exportHtml = null;
         $exportJs = null;
         $exportPhp = null;
@@ -203,7 +204,7 @@ class AlCrudResourceCommand extends Command
         ]);
 
         $this->writeStubToApp('view-show', $viewShowFile, [
-            'rowInfo' => collect($instance->displayable)->map(function ($field) {
+            'rowInfo' => collect($instance->visible)->map(function ($field) {
                 return '
                 <tr>
                     <th width="30%">' . Str::headline($field) . '</th>
@@ -221,7 +222,7 @@ class AlCrudResourceCommand extends Command
         ]);
 
         $this->writeStubToApp('view-form', $viewFormFile, [
-            'formField' => collect($instance->displayable)->map(function ($field) {
+            'formField' => collect($instance->visible)->map(function ($field) {
                 return '
     <div class="col-md-6 form-group">
         {!! Form::label("' . $field . '", "' . Str::headline($field) . '") !!}

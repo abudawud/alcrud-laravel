@@ -5,6 +5,9 @@ namespace {{ namespace }};
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use {{ parentModelClass }};
 
+/**
+ * @property-read int $id
+ */
 class {{ class }} extends {{ parentModel }}
 {
     use HasFactory;
@@ -19,7 +22,7 @@ class {{ class }} extends {{ parentModel }}
         {{ fillable }}
     ];
 
-    public $displayable = [
+    public $visible = [
         {{ fillable }}
     ];
 

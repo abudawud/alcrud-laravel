@@ -21,7 +21,7 @@ class {{ class }} extends Controller
     protected function buildQuery()
     {
       return {{ model }}::query()
-        ->select((new {{ model }})->getDisplayableFields());
+        ->select((new {{ model }})->getVisibleFields());
     }
 
     protected function buildDatatable($query)

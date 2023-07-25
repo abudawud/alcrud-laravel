@@ -50,8 +50,8 @@ class AlCrudModelCommand extends Command
             $moduleAppClass = "";
             $moduleAppFile = "";
         } else {
-            $moduleAppClass = "\\{$module}";
-            $moduleAppFile = "/{$module}";
+            $moduleAppClass = "\\" . ucfirst($module);
+            $moduleAppFile = "/" . ucfirst($module);
         }
 
         $modelFile = app_path("Models{$moduleAppFile}/{$model}.php");

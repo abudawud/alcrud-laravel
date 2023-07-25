@@ -20,9 +20,9 @@ class BaseModel extends Model
         }
     }
 
-    public function getDisplayableFields($withTable = true)
+    public function getVisibleFields($withTable = true)
     {
-        $collection = collect($this->displayable)->push($this->primaryKey);
+        $collection = collect($this->visible)->push($this->primaryKey);
         if ($withTable) {
             return $collection->map(function ($field) {
                 return "{$this->getTable()}.{$field}";
