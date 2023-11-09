@@ -2,6 +2,7 @@
 
 namespace AbuDawud\AlCrudLaravel\Console;
 
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Permission;
@@ -17,8 +18,8 @@ class AlCrudResourceCommand extends Command
      * @var string
      */
     protected $signature = 'alcrud:resource {module?}
-    {--m|model= : model yang digunakan untuk membuat crud}
-    {--p|policy= : kata kunci policy}
+    {--m|model= : model class yang digunakan untuk membuat crud}
+    {--c|controller= : controller name of resource}
     {--t|title= : judul form crud}
     {--simple : buat simple modal crud}
     {--with-record : tambah record otomatis}
@@ -53,27 +54,31 @@ class AlCrudResourceCommand extends Command
         }
 
         $model = $this->option('model');
-        $policyName = $this->option('policy');
+        $name = $this->option('controller');
+        if (empty($name)) {
+            $name = array_reverse(explode("\\", $model))[0];
+        }
+        $nameSnake = Str::snake($name, "-");
         $title = $this->option('title');
-        if (empty($model) || empty($policyName) || empty($title)) {
-            $this->error('Opsi policy, model, dan title dibutuhkan!');
+        if (empty($model) || empty($name) || empty($title)) {
+            $this->error('Opsi name, model, dan title dibutuhkan!');
 
             return static::INVALID;
         }
 
-        $modelSnake = Str::snake($model, '-');
-        // check model exist
-        if (!$this->fileExists(app_path("Models{$moduleAppFile}/$model.php"))) {
-            $this->error('Model yg dimaksud tidak ditemukan!');
+        try {
+            $instance = new $model;
+        } catch(Exception $e){
+            $this->error('Model tidak ditemukan!');
 
             return static::INVALID;
         }
 
-        $controllerFile = app_path("Http/Controllers{$moduleAppFile}/{$model}Controller.php");
-        $policyFile = app_path("Policies{$moduleAppFile}/{$model}Policy.php");
-        $storeRequestFile = app_path("Http/Requests{$moduleAppFile}/Store{$model}Request.php");
-        $updateRequestFile = app_path("Http/Requests{$moduleAppFile}/Update{$model}Request.php");
-        $viewPath = resource_path("views{$moduleAppFileSnake}/{$modelSnake}");
+        $policy = str_replace('Models', 'Policies', $model) . 'Policy';
+        $controllerFile = app_path("Http/Controllers{$moduleAppFile}/{$name}Controller.php");
+        $storeRequestFile = app_path("Http/Requests{$moduleAppFile}/Store{$name}Request.php");
+        $updateRequestFile = app_path("Http/Requests{$moduleAppFile}/Update{$name}Request.php");
+        $viewPath = resource_path("views{$moduleAppFileSnake}/{$nameSnake}");
         $viewIndexFile = "{$viewPath}/index.blade.php";
         $viewCreateFile = "{$viewPath}/create.blade.php";
         $viewEditFile = "{$viewPath}/edit.blade.php";
@@ -82,7 +87,7 @@ class AlCrudResourceCommand extends Command
 
         if (!$this->option('force') && $this->checkForCollision([
             $controllerFile,
-            $policyFile,
+            $policy,
             $storeRequestFile, $updateRequestFile,
             $viewIndexFile, $viewCreateFile, $viewEditFile, $viewFormFile, $viewShowFile,
         ])) {
@@ -91,20 +96,19 @@ class AlCrudResourceCommand extends Command
             return static::INVALID;
         }
 
-
-        $modelClass = "App\\Models{$moduleAppClass}\\{$model}";
-        $instance = new $modelClass;
         $columns = collect($instance->visible);
         $exportHtml = null;
         $exportJs = null;
         $exportPhp = null;
         $useExportClass = null;
+        $modelName = array_reverse(explode("\\", $model))[0];
+        $policyName = array_reverse(explode("\\", $policy))[0];
         if ($this->option('with-export')) {
             $exportJs = str_replace([
                 '{{ route_export }}',
                 '{{ title }}',
             ], [
-                "{$moduleRoute}{$modelSnake}",
+                strtolower("{$moduleRoute}{$nameSnake}"),
                 $title,
             ], $this->exportJs());
             $exportHtml = $this->exportHtml();
@@ -113,22 +117,22 @@ class AlCrudResourceCommand extends Command
                 '{{ title }}',
                 '{{ routeView }}'
             ], [
-                $model,
+                $name,
                 $title,
-                "{$moduleRoute}{$modelSnake}",
+                strtolower("{$moduleRoute}{$nameSnake}"),
             ],$this->exportPhp());
             $useExportClass = implode("\n", [
-                "use App\\Exports{$moduleAppClass}\\{$model}Export;",
+                "use App\\Exports{$moduleAppClass}\\{$name}Export;",
                 "use Maatwebsite\\Excel\\Facades\\Excel;",
                 "use Barryvdh\DomPDF\Facade\Pdf;",
             ]);
 
             // Export
-            $targetFile = app_path("Exports{$moduleAppFile}/{$model}Export.php");
+            $targetFile = app_path("Exports{$moduleAppFile}/{$name}Export.php");
             $this->writeStubToApp('export', $targetFile, [
                 'namespace' => "App\\Exports{$moduleAppClass}",
-                'class' => "{$model}Export",
-                'routeView' => "{$moduleRoute}{$modelSnake}",
+                'class' => "{$name}Export",
+                'routeView' => strtolower("{$moduleRoute}{$nameSnake}"),
             ]);
 
             // Excel template
@@ -149,17 +153,17 @@ class AlCrudResourceCommand extends Command
 
         $this->writeStubToApp('controller', $controllerFile, [
             'namespace' => "App\\Http\\Controllers{$moduleAppClass}",
-            'modelClass' => "App\\Models{$moduleAppClass}\\{$model}",
-            'updateRequestClass' => "App\\Http\\Requests{$moduleAppClass}\\Update{$model}Request",
-            'storeRequestClass' => "App\\Http\\Requests{$moduleAppClass}\\Store{$model}Request",
-            'policyClass' => "App\\Policies{$moduleAppClass}\\{$model}Policy",
-            'class' => "{$model}Controller",
-            'policy' => "{$model}Policy",
-            'model' => "{$model}",
-            'storeRequest' => "Store{$model}Request",
-            'updateRequest' => "Update{$model}Request",
-            'routeView' => "{$moduleRoute}{$modelSnake}",
-            'modelName' => Str::camel($model),
+            'modelClass' => $model,
+            'updateRequestClass' => "App\\Http\\Requests{$moduleAppClass}\\Update{$name}Request",
+            'storeRequestClass' => "App\\Http\\Requests{$moduleAppClass}\\Store{$name}Request",
+            'policyClass' => $policy,
+            'class' => "{$name}Controller",
+            'policy' => $policyName,
+            'model' => $modelName,
+            'storeRequest' => "Store{$name}Request",
+            'updateRequest' => "Update{$name}Request",
+            'routeView' => strtolower("{$moduleRoute}{$nameSnake}"),
+            'modelName' => Str::camel($modelName),
             'buttonMode' => $this->option('simple') ? 'modal-remote' : '',
             'title' => $title,
             'keyName' => $instance->getKeyName(),
@@ -169,35 +173,26 @@ class AlCrudResourceCommand extends Command
 
         $this->writeStubToApp('request', $updateRequestFile, [
             'namespace' => "App\\Http\\Requests{$moduleAppClass}",
-            'modelClass' => "App\\Models{$moduleAppClass}\\{$model}",
-            'class' => "Update{$model}Request",
-            'model' => "{$model}",
+            'modelClass' => $model,
+            'class' => "Update{$name}Request",
+            'model' => $modelName,
         ]);
 
         $this->writeStubToApp('request', $storeRequestFile, [
             'namespace' => "App\\Http\\Requests{$moduleAppClass}",
-            'modelClass' => "App\\Models{$moduleAppClass}\\{$model}",
-            'class' => "Store{$model}Request",
-            'model' => "{$model}",
+            'modelClass' => $model,
+            'class' => "Store{$name}Request",
+            'model' => $modelName,
         ]);
 
-        $this->writeStubToApp('policy', $policyFile, [
-            'namespace' => "App\\Policies{$moduleAppClass}",
-            'modelClass' => "App\\Models{$moduleAppClass}\\{$model}",
-            'modelUserClass' => 'App\\Models\\User',
-            'modelUser' => 'User',
-            'class' => "{$model}Policy",
-            'policyName' => "{$policyName}",
-            'model' => "{$model}",
-        ]);
 
         $this->writeStubToApp('view-index', $viewIndexFile, [
             'title' => $title,
             'head' => $columns->map(fn ($str) => '<th class="text-primary">' . Str::headline($str) . '</th>')->push('<th>Actions</th>')->prepend('<th>Id</th>')->implode("\n                          "),
             'foot' => $columns->map(fn ($str) => '<th class="filter">' . Str::headline($str) . '</th>')->push('<th></th>')->prepend('<th></th>')->implode("\n                          "),
             'columns' => $columns->map(fn ($str) => ['data' => $str])->push(['data' => 'actions'])->prepend(['data' => $instance->getKeyName()])->toJson(),
-            'routeView' => "{$moduleRoute}{$modelSnake}",
-            'policyClass' => "App\\Policies{$moduleAppClass}\\{$model}Policy",
+            'routeView' => strtolower("{$moduleRoute}{$nameSnake}"),
+            'policyClass' => $policy,
             'buttonMode' => $this->option('simple') ? 'modal-remote' : '',
             'exportHtml' => $exportHtml,
             'exportJs' => $exportJs,
@@ -214,11 +209,11 @@ class AlCrudResourceCommand extends Command
         ]);
 
         $this->writeStubToApp('view-create', $viewCreateFile, [
-            'routeView' => "{$moduleRoute}{$modelSnake}",
+            'routeView' => strtolower("{$moduleRoute}{$nameSnake}"),
         ]);
 
         $this->writeStubToApp('view-edit', $viewEditFile, [
-            'routeView' => "{$moduleRoute}{$modelSnake}",
+            'routeView' => strtolower("{$moduleRoute}{$nameSnake}"),
         ]);
 
         $this->writeStubToApp('view-form', $viewFormFile, [
@@ -238,7 +233,7 @@ class AlCrudResourceCommand extends Command
             ]);
             $this->appendStubToApp('view-create-foot', $viewCreateFile, [
                 'title' => "Tambah {$title}",
-                'routeView' => "{$moduleRoute}{$modelSnake}",
+                'routeView' => strtolower("{$moduleRoute}{$nameSnake}"),
                 'keyName' => $instance->getKeyName(),
             ]);
 
@@ -247,7 +242,7 @@ class AlCrudResourceCommand extends Command
             ]);
             $this->appendStubToApp('view-edit-foot', $viewEditFile, [
                 'title' => "Update {$title}",
-                'routeView' => "{$moduleRoute}{$modelSnake}",
+                'routeView' => strtolower("{$moduleRoute}{$nameSnake}"),
                 'keyName' => $instance->getKeyName(),
             ]);
 
@@ -258,7 +253,7 @@ class AlCrudResourceCommand extends Command
             ]);
             $this->appendStubToApp('view-show-foot', $viewShowFile, [
                 'title' => "Lihat {$title}",
-                'routeView' => "{$moduleRoute}{$modelSnake}",
+                'routeView' => strtolower("{$moduleRoute}{$nameSnake}"),
                 'keyName' => $instance->getKeyName(),
             ]);
         } else {
@@ -274,7 +269,7 @@ class AlCrudResourceCommand extends Command
             $routeModel = new $routeModel;
             $route = $routeModel->create([
                 'module_id' => config('alcrud.default_module_id'),
-                'url' => "{$moduleAppFileSnake}{$modelSnake}",
+                'url' => "{$moduleAppFileSnake}{$nameSnake}",
                 'can' => "{$policyName}.viewAny",
                 'active' => true,
             ]);
@@ -305,77 +300,32 @@ class AlCrudResourceCommand extends Command
 
     private function exportJs() {
         return <<<JS
-            $('#btn-export-excel').on('click', function (e) {
-                $('#btn-export-excel').attr('disabled', true);
-                const request = new XMLHttpRequest();
-                const params = api.ajax.params();
-                // remove limit
-                delete params.start;
-                delete params.limit;
-                params._token = "{{ csrf_token() }}";
-                request.open("POST", '{{ route("{{ route_export }}.export", ['type' => 'excel']) }}');
-                request.responseType = 'blob';
-                request.setRequestHeader("Content-Type", "application/json")
-                request.send(JSON.stringify(params));
-                request.onload = function(e) {
-                    if (this.status == 200) {
-                        const blob = new Blob([this.response]);
-                        let a = document.createElement("a");
-                        a.style = "display: none";
-                        document.body.appendChild(a);
-                        //Create a DOMString representing the blob and point the link element towards it
-                        let url = window.URL.createObjectURL(blob);
-                        a.href = url;
-                        a.download = '{{ title }}.xlsx';
-                        //programatically click the link to trigger the download
-                        a.click();
-                        //release the reference to the file by revoking the Object URL
-                        window.URL.revokeObjectURL(url);
-                        // remove a
-                        document.body.removeChild(a);
-                        $('#btn-export-excel').attr('disabled', false);
-                    } else {
-                        alert("Gagal export, terapkan filter agar data tidak terlalu banyak!");
-                        $('#btn-export-excel').attr('disabled', false);
-                    }
-                }
-            })
+            function downloadInNewTab(url) {
+                const a = document.createElement('a');
+                a.href = url;
+                a.target = '_blank'; // Open in a new tab
+                a.rel = 'noopener noreferrer'; // No referrer for security reasons
+                document.body.appendChild(a); // Temporarily add to the DOM
+                a.click(); // Trigger a click
+                document.body.removeChild(a); // Remove from the DOM
+            }
 
-            $('#btn-export-pdf').on('click', function (e) {
-                $('#btn-export-pdf').attr('disabled', true);
-                const request = new XMLHttpRequest();
+            $('#btn-export-excel').on('click', function(e) {
                 const params = api.ajax.params();
-                // remove limit
                 delete params.start;
                 delete params.limit;
-                params._token = "{{ csrf_token() }}";
-                request.open("POST", '{{ route("{{ route_export }}.export", ['type' => 'pdf']) }}');
-                request.responseType = 'blob';
-                request.setRequestHeader("Content-Type", "application/json")
-                request.send(JSON.stringify(params));
-                request.onload = function(e) {
-                    if (this.status == 200) {
-                        const blob = new Blob([this.response]);
-                        let a = document.createElement("a");
-                        a.style = "display: none";
-                        document.body.appendChild(a);
-                        //Create a DOMString representing the blob and point the link element towards it
-                        let url = window.URL.createObjectURL(blob);
-                        a.href = url;
-                        a.download = '{{ title }}.pdf';
-                        //programatically click the link to trigger the download
-                        a.click();
-                        //release the reference to the file by revoking the Object URL
-                        window.URL.revokeObjectURL(url);
-                        // remove a
-                        document.body.removeChild(a);
-                        $('#btn-export-pdf').attr('disabled', false);
-                    } else {
-                        alert("Gagal export, terapkan filter agar data tidak terlalu banyak!");
-                        $('#btn-export-pdf').attr('disabled', false);
-                    }
-                }
-            })
+
+                downloadInNewTab("{{ route('{{ route_export }}.export') }}" + "?type=excel&" + $.param(
+                    params));
+            });
+            $('#btn-export-pdf').on('click', function(e) {
+                const params = api.ajax.params();
+                delete params.start;
+                delete params.limit;
+
+                downloadInNewTab("{{ route('{{ route_export }}.export') }}" + "?type=pdf&" + $.param(
+                    params));
+            });
         JS;
     }
 

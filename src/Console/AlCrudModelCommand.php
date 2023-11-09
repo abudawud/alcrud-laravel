@@ -17,7 +17,9 @@ class AlCrudModelCommand extends Command
      */
     protected $signature = 'alcrud:model {module?}
     {--m|model= : nama model}
+    {--p|policy= : nama policy}
     {--with-migration : buat file migrasi}
+    {--with-policy : buat file policy}
     {--t|table= : nama tabel}
     {--c|connection= : nama koneksi}
     {--force : timpa file jika sudah ada}';
@@ -96,6 +98,20 @@ class AlCrudModelCommand extends Command
             $this->call('make:migration', [
                 'name' => "create_{$table}_table",
                 '--path' => "database/migrations{$moduleAppFile}",
+            ]);
+        }
+
+        if ($this->option('with-policy')) {
+            $policy = $this->option('policy');
+            if (empty($policy)) {
+                $this->error('key policy dibutuhkan!');
+
+                return static::INVALID;
+            }
+            $this->call('alcrud:policy', [
+                '-m' => $model,
+                'module' => $module,
+                '-p' => $policy,
             ]);
         }
     }

@@ -3,6 +3,7 @@
 namespace AbuDawud\AlCrudLaravel;
 
 use AbuDawud\AlCrudLaravel\Console\AlCrudModelCommand;
+use AbuDawud\AlCrudLaravel\Console\AlCrudPolicyCommand;
 use AbuDawud\AlCrudLaravel\Console\AlCrudResourceCommand;
 use AbuDawud\AlCrudLaravel\Views\Components\ICheck;
 use AbuDawud\AlCrudLaravel\Views\Components\Modal;
@@ -76,6 +77,7 @@ class AlCrudLaravelServiceProvider extends BaseServiceProvider
         $this->commands([
             AlCrudResourceCommand::class,
             AlCrudModelCommand::class,
+            AlCrudPolicyCommand::class,
         ]);
     }
 }
