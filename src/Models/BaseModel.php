@@ -40,10 +40,10 @@ class BaseModel extends Model
     }
 
     public function getStatusTextAttribute() {
-        return $this->isActiveAttribute == '1' ? 'Aktif' : 'Non-Aktif';
+        return $this->{$this->isActiveAttribute} == '1' ? 'Aktif' : 'Non-Aktif';
     }
 
     public function getStatusIconAttribute() {
-        return $this->isActiveAttribute == '1' ? '<span class="fas fa-check-circle text-primary"></span>' : '<span class="fas fa-times-circle text-danger"></span>';
+        return $this->{$this->isActiveAttribute} == '1' ? '<span class="fas fa-check-circle text-primary"></span>' : '<span class="fas fa-times-circle text-danger"></span>';
     }
 }

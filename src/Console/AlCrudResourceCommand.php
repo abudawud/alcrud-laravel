@@ -54,6 +54,7 @@ class AlCrudResourceCommand extends Command
         }
 
         $model = $this->option('model');
+        $policy = str_replace('Models', 'Policies', $model) . 'Policy';
         $name = $this->option('controller');
         if (empty($name)) {
             $name = array_reverse(explode("\\", $model))[0];
@@ -68,13 +69,12 @@ class AlCrudResourceCommand extends Command
 
         try {
             $instance = new $model;
+            $policyInstance = new $policy;
         } catch(Exception $e){
-            $this->error('Model tidak ditemukan!');
-
+            $this->error('Model or policy tidak ditemukan!');
             return static::INVALID;
         }
 
-        $policy = str_replace('Models', 'Policies', $model) . 'Policy';
         $controllerFile = app_path("Http/Controllers{$moduleAppFile}/{$name}Controller.php");
         $storeRequestFile = app_path("Http/Requests{$moduleAppFile}/Store{$name}Request.php");
         $updateRequestFile = app_path("Http/Requests{$moduleAppFile}/Update{$name}Request.php");
@@ -156,6 +156,7 @@ class AlCrudResourceCommand extends Command
             'modelClass' => $model,
             'updateRequestClass' => "App\\Http\\Requests{$moduleAppClass}\\Update{$name}Request",
             'storeRequestClass' => "App\\Http\\Requests{$moduleAppClass}\\Store{$name}Request",
+            'columns' => $columns->map(fn ($str) => "\"{\$table}.$str\"")->prepend("\"{\$table}.".$instance->getKeyName().'"')->implode(","),
             'policyClass' => $policy,
             'class' => "{$name}Controller",
             'policy' => $policyName,
@@ -261,8 +262,9 @@ class AlCrudResourceCommand extends Command
         }
 
         if ($this->option('with-record')) {
+            $policyKey = $policyInstance::POLICY_NAME;
             foreach(['viewAny', 'view', 'update', 'create', 'delete'] as $ability) {
-                $this->createPermission($policyName, $ability);
+                $this->createPermission($policyKey, $ability);
             }
             $routeModel = config('alcrud.route_model');
             $menuModel = config('alcrud.menu_model');
@@ -270,7 +272,7 @@ class AlCrudResourceCommand extends Command
             $route = $routeModel->create([
                 'module_id' => config('alcrud.default_module_id'),
                 'url' => "{$moduleAppFileSnake}{$nameSnake}",
-                'can' => "{$policyName}.viewAny",
+                'can' => "{$policyKey}.viewAny",
                 'active' => true,
             ]);
             $menuModel = new $menuModel;

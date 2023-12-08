@@ -20,7 +20,10 @@ class {{ class }} extends Controller
 
     protected function buildQuery()
     {
-      return {{ model }}::query();
+      $table = {{ model }}::getTableName();
+      return {{ model }}::select([
+       {{ columns }}
+      ]);
     }
 
     protected function buildDatatable($query)

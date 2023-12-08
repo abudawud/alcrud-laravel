@@ -41,12 +41,17 @@
                 doXHR($(this).attr('href'), $(this).data());
             })
 
+            function resetSize() {
+                $('#modalCRU > div.modal-dialog').removeClass('modal-xl modal-lg');
+            }
+
             function doXHR(url, data = []) {
                 $.ajax({
                     url: url,
                     data: data,
                     dataType: 'json',
                     beforeSend: function() {
+                        resetSize();
                         $('#modalCRU').find('.modal-title').html("Loading...");
                         $('#modalCRU').find('.content-loading').show();
                         $('#modalCRU').find('.content-html,.content-error,.modal-footer').empty();
@@ -55,6 +60,9 @@
                         $('#modalCRU').modal('show');
                     },
                     success: function(data) {
+                        if (!!data.size) {
+                            $('#modalCRU > div.modal-dialog').addClass(`modal-${data.size}`);
+                        }
                         $('#modalCRU').find('.modal-title').html(data.title);
                         $('#modalCRU').find('.content-loading').slideUp(200, function() {
                             $('#modalCRU').find('.content-html').html(data.content).slideDown();
