@@ -189,8 +189,9 @@
                                     })
                                 })
                         } else {
+                            console.log(data);
                             $('#modalCRU div.content-error').append(
-                                `<b>(${data.status}) ${data.statusText}</b><br/><p>${data.responseText}`
+                                `<b>(${data.status}) ${data.statusText}</b><br/><p>${data.responseJSON?.message ?? data.responseText ?? "Please check your connection!"}`
                                 );
                         }
                         $('#modalCRU').find('.content-loading').slideUp(200, function() {
