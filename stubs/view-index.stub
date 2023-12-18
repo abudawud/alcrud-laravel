@@ -75,7 +75,7 @@
               dom: dom,
               processing: true,
               serverSide: true,
-              ajax: '{{ route("{{ routeView }}.index") }}',
+              ajax: "{{ route('{{ routeView }}.index') }}",
               pageLength: 25,
               colReorder: true,
               order: [[0, 'desc']],

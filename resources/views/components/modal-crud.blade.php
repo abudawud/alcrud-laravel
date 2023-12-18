@@ -162,6 +162,12 @@
                     data: data,
                     dataType: 'json',
                     success: function(data) {
+                        if (!!data.status_code) {
+                            if (data.status_code == 302){
+                                window.location.href = data.location;
+                            }
+                            return;
+                        }
                         $('#modalCRU').modal('hide');
                         $('{{ $tableId }}').DataTable().draw(false);
                         if (data.notification) {
