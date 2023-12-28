@@ -17,7 +17,7 @@
         </x-slot>
     </x-adminlte-modal>
 
-    <x-adminlte-modal id="modalD" theme="danger" title="Hapus {{ $title }}">
+    <x-adminlte-modal id="modalD" theme="danger" title="Hapus Data">
         <div id="modal-body">
             <div style="display: none" class="error-hint rounded bg-danger py-1 px-2 mb-2">
             </div>
@@ -25,7 +25,7 @@
                 {!! Form::token() !!}
                 {!! Form::hidden('_method', 'DELETE') !!}
             </form>
-            Apakah anda yakin ingin menghapus data ini ?
+            <span class="modal-message">Apakah anda yakin ingin menghapus data ini ?</span>
         </div>
         <x-slot name="footerSlot">
             <x-adminlte-button type="submit" theme="danger" label="Hapus" />
@@ -89,16 +89,23 @@
             }
 
             $('#btn-reset').on('click', function() {
-                $('#datatable thead tr.filter th input').val('').change();
-                $('{{ $tableId }}').DataTable().search('').draw();
+                const datatableId = $(this).data('datatable-id') ?? '#datatable';
+                $(`${datatableId} thead tr.filter th input`).val('').change();
+                $(datatableId).DataTable().search('').draw();
             });
 
             $('#modalCRU').on('click', 'button[type=submit]', function() {
                 $('#modalCRU').find('form').submit();
             })
 
-            $('{{ $tableId }} tbody,.btn.btn-delete.modal-remote').on('click', '.btn-delete', function(e) {
+            $('div.container-fluid').on('click', '.btn.btn-delete', function(e) {
                 e.preventDefault();
+                const data = $(this).data();
+                const title = data.title ?? 'Hapus Data';
+                const desc = data.desc ?? 'Apakah anda yakin ingin menghapus data ini ?';
+
+                $('#modalD').find('h4.modal-title').text(title);
+                $('#modalD').find('span.modal-message').text(desc);
                 $('#modalD').find('form').attr('action', $(this).attr('href'));
                 $('#modalD').find('.error-hint').hide().empty();
                 $('#modalD').modal('show');
@@ -114,7 +121,21 @@
                     method: form[0].method,
                     data: data,
                     success: function(data) {
-                        if (!$('{{ $tableId }}').DataTable) {
+                        if (!!data.status_code) {
+                            if (data.status_code == 302){
+                                window.location.href = data.location;
+                            }
+                            return;
+                        }
+                        if (!!data.callback_function) {
+                            if (typeof window[data.callback_function] === 'function') {
+                                window[data.callback_function]();
+                            } else {
+                              console.error('Function does not exist.');
+                            }
+                        }
+                        const datatableId = data.datatableId ?? '#datatable';
+                        if (!$(datatableId).DataTable) {
                             const redirect = $('div.need-delete').find('.btn-delete').data(
                                 'redirect');
                             $('div.card-body,div.card-footer').slideUp();
@@ -124,7 +145,7 @@
                                 window.location = redirect;
                             }
                         } else {
-                            $('{{ $tableId }}').DataTable().draw(false);
+                            $(datatableId).DataTable().draw(false);
                             if (data.notification) {
                                 toastr[data.notification.type](data.notification.message, data.notification.title);
                             }
@@ -168,8 +189,17 @@
                             }
                             return;
                         }
+                        if (!!data.callback_function) {
+                            if (typeof data.callback_function === 'function') {
+                                window[data.callback_function]();
+                                return;
+                            } else {
+                              console.error('Function does not exist.');
+                            }
+                        }
+                        const datatableId = data.datatableId ?? '#datatable';
                         $('#modalCRU').modal('hide');
-                        $('{{ $tableId }}').DataTable().draw(false);
+                        $(datatableId).DataTable().draw(false);
                         if (data.notification) {
                             toastr[data.notification.type](data.notification.message, data.notification.title);
                         }
