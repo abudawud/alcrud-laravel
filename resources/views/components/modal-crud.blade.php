@@ -190,9 +190,8 @@
                             return;
                         }
                         if (!!data.callback_function) {
-                            if (typeof data.callback_function === 'function') {
+                            if (typeof window[data.callback_function] === 'function') {
                                 window[data.callback_function]();
-                                return;
                             } else {
                               console.error('Function does not exist.');
                             }
