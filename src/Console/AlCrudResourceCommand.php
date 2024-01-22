@@ -23,7 +23,9 @@ class AlCrudResourceCommand extends Command
     {--t|title= : judul form crud}
     {--simple : buat simple modal crud}
     {--with-record : tambah record otomatis}
-    {--with-export : tambah record otomatis}
+    {--with-export : module export}
+    {--export-excel : export excel}
+    {--export-pdf : export pdf}
     {--force : timpa file jika sudah ada}';
 
     /**
@@ -70,7 +72,7 @@ class AlCrudResourceCommand extends Command
         try {
             $instance = new $model;
             $policyInstance = new $policy;
-        } catch(Exception $e){
+        } catch (Exception $e) {
             $this->error('Model or policy tidak ditemukan!');
             return static::INVALID;
         }
@@ -104,14 +106,20 @@ class AlCrudResourceCommand extends Command
         $modelName = array_reverse(explode("\\", $model))[0];
         $policyName = array_reverse(explode("\\", $policy))[0];
         if ($this->option('with-export')) {
+            $exportExcel = $this->option('export-excel');
+            $exportPdf = $this->option('export-pdf');
+            if (!$exportExcel && !$exportPdf) {
+                $this->error('Pilih export excel dan atau export pdf!');
+                return static::INVALID;
+            }
             $exportJs = str_replace([
                 '{{ route_export }}',
                 '{{ title }}',
             ], [
                 strtolower("{$moduleRoute}{$nameSnake}"),
                 $title,
-            ], $this->exportJs());
-            $exportHtml = $this->exportHtml();
+            ], $this->exportJs($exportExcel, $exportPdf));
+            $exportHtml = $this->exportHtml($exportExcel, $exportPdf);
             $exportPhp = str_replace([
                 '{{ model }}',
                 '{{ title }}',
@@ -120,35 +128,43 @@ class AlCrudResourceCommand extends Command
                 $name,
                 $title,
                 strtolower("{$moduleRoute}{$nameSnake}"),
-            ],$this->exportPhp());
-            $useExportClass = implode("\n", [
-                "use App\\Exports{$moduleAppClass}\\{$name}Export;",
-                "use Maatwebsite\\Excel\\Facades\\Excel;",
-                "use Barryvdh\DomPDF\Facade\Pdf;",
-            ]);
+            ], $this->exportPhp($exportExcel, $exportPdf));
+            $useExportClass = [];
+            if ($exportExcel) {
+                $useExportClass[] = "use App\\Exports{$moduleAppClass}\\{$name}Export;";
+                $useExportClass[] = "use Maatwebsite\\Excel\\Facades\\Excel;";
+            }
+            if ($exportPdf) {
+                $useExportClass[] = "use Barryvdh\DomPDF\Facade\Pdf;";
+            }
+            $useExportClass = implode("\n", $useExportClass);
 
             // Export
-            $targetFile = app_path("Exports{$moduleAppFile}/{$name}Export.php");
-            $this->writeStubToApp('export', $targetFile, [
-                'namespace' => "App\\Exports{$moduleAppClass}",
-                'class' => "{$name}Export",
-                'routeView' => strtolower("{$moduleRoute}{$nameSnake}"),
-            ]);
+            if ($exportExcel) {
+                $targetFile = app_path("Exports{$moduleAppFile}/{$name}Export.php");
+                $this->writeStubToApp('export', $targetFile, [
+                    'namespace' => "App\\Exports{$moduleAppClass}",
+                    'class' => "{$name}Export",
+                    'routeView' => strtolower("{$moduleRoute}{$nameSnake}"),
+                ]);
 
-            // Excel template
-            $targetFile = "{$viewPath}/export/excel.blade.php";
-            $this->writeStubToApp('view-export-excel', $targetFile, [
-                'head' => $columns->map(fn ($str) => '<th class="text-primary">' . Str::headline($str) . '</th>')->implode("\n                          "),
-                'columnExport' => $columns->map(fn ($str) => '<td>{{ $record[\''. $str .'\'] }}</td>')->implode("\n          "),
-            ]);
+                // Excel template
+                $targetFile = "{$viewPath}/export/excel.blade.php";
+                $this->writeStubToApp('view-export-excel', $targetFile, [
+                    'head' => $columns->map(fn ($str) => '<th class="text-primary">' . Str::headline($str) . '</th>')->implode("\n                          "),
+                    'columnExport' => $columns->map(fn ($str) => '<td>{{ $record[\'' . $str . '\'] }}</td>')->implode("\n          "),
+                ]);
+            }
 
-            // PDF template
-            $targetFile = "{$viewPath}/export/pdf.blade.php";
-            $this->writeStubToApp('view-export-pdf', $targetFile, [
-                'head' => $columns->map(fn ($str) => '<th class="text-primary">' . Str::headline($str) . '</th>')->implode("\n                          "),
-                'columnExport' => $columns->map(fn ($str) => '<td>{{ $record[\''. $str .'\'] }}</td>')->implode("\n          "),
-                'title' => $title,
-            ]);
+            if ($exportPdf) {
+                // PDF template
+                $targetFile = "{$viewPath}/export/pdf.blade.php";
+                $this->writeStubToApp('view-export-pdf', $targetFile, [
+                    'head' => $columns->map(fn ($str) => '<th class="text-primary">' . Str::headline($str) . '</th>')->implode("\n                          "),
+                    'columnExport' => $columns->map(fn ($str) => '<td>{{ $record[\'' . $str . '\'] }}</td>')->implode("\n          "),
+                    'title' => $title,
+                ]);
+            }
         }
 
         $this->writeStubToApp('controller', $controllerFile, [
@@ -156,7 +172,7 @@ class AlCrudResourceCommand extends Command
             'modelClass' => $model,
             'updateRequestClass' => "App\\Http\\Requests{$moduleAppClass}\\Update{$name}Request",
             'storeRequestClass' => "App\\Http\\Requests{$moduleAppClass}\\Store{$name}Request",
-            'columns' => $columns->map(fn ($str) => "\"{\$table}.$str\"")->prepend("\"{\$table}.".$instance->getKeyName().'"')->implode(","),
+            'columns' => $columns->map(fn ($str) => "\"{\$table}.$str\"")->prepend("\"{\$table}." . $instance->getKeyName() . '"')->implode(","),
             'policyClass' => $policy,
             'class' => "{$name}Controller",
             'policy' => $policyName,
@@ -263,7 +279,7 @@ class AlCrudResourceCommand extends Command
 
         if ($this->option('with-record')) {
             $policyKey = $policyInstance::POLICY_NAME;
-            foreach(['viewAny', 'view', 'update', 'create', 'delete'] as $ability) {
+            foreach (['viewAny', 'view', 'update', 'create', 'delete'] as $ability) {
                 $this->createPermission($policyKey, $ability);
             }
             $routeModel = config('alcrud.route_model');
@@ -285,23 +301,30 @@ class AlCrudResourceCommand extends Command
         }
     }
 
-    private function exportHtml() {
-        return <<<HTML
+    private function exportHtml($exportExcel, $exportPdf)
+    {
+        $html = <<<HTML
             <div class="btn-group">
               <a class="btn btn-default dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                   <span class="fas fa-file-export"></span> Export Data
               </a>
 
               <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
-                <button id="btn-export-excel" title="Export Excel" class="dropdown-item"> <span class="fas fa-file-excel"></span> Excel</button>
-                <button id="btn-export-pdf" title="Export PDF" class="dropdown-item"> <span class="fas fa-file-pdf"></span> PDF</button>
-              </div>
-            </div>
         HTML;
+        if ($exportExcel) {
+            $html .= '<button id="btn-export-excel" title="Export Excel" class="dropdown-item"> <span class="fas fa-file-excel"></span> Excel</button>';
+        }
+        if ($exportPdf) {
+            $html .= '<button id="btn-export-pdf" title="Export PDF" class="dropdown-item"> <span class="fas fa-file-pdf"></span> PDF</button>';
+        }
+
+        $html .= '</div></div>';
+        return $html;
     }
 
-    private function exportJs() {
-        return <<<JS
+    private function exportJs($exportExcel, $exportPdf)
+    {
+        $js = <<<JAVASCRIPT
             function downloadInNewTab(url) {
                 const a = document.createElement('a');
                 a.href = url;
@@ -311,7 +334,10 @@ class AlCrudResourceCommand extends Command
                 a.click(); // Trigger a click
                 document.body.removeChild(a); // Remove from the DOM
             }
+        JAVASCRIPT;
 
+        if ($exportExcel) {
+            $js .= <<<JAVASCRIPT
             $('#btn-export-excel').on('click', function(e) {
                 const params = api.ajax.params();
                 delete params.start;
@@ -320,6 +346,10 @@ class AlCrudResourceCommand extends Command
                 downloadInNewTab("{{ route('{{ route_export }}.export') }}" + "?type=excel&" + $.param(
                     params));
             });
+            JAVASCRIPT;
+        }
+        if ($exportPdf) {
+            $js .= <<<JAVASCRIPT
             $('#btn-export-pdf').on('click', function(e) {
                 const params = api.ajax.params();
                 delete params.start;
@@ -328,11 +358,15 @@ class AlCrudResourceCommand extends Command
                 downloadInNewTab("{{ route('{{ route_export }}.export') }}" + "?type=pdf&" + $.param(
                     params));
             });
-        JS;
+            JAVASCRIPT;
+        }
+
+        return $js;
     }
 
-    private function exportPhp() {
-        return '
+    private function exportPhp($exportExcel, $exportPdf)
+    {
+        $php = '
         public function export(Request $request)
         {
             if ($request->get("type") == "excel") {
@@ -342,32 +376,42 @@ class AlCrudResourceCommand extends Command
             } else {
                 abort(403, "Unknown filetype!");
             }
-        }
-
-        private function exportExcel()
-        {
-            $data = $this->buildDatatable($this->buildQuery())->toArray();
-            $exporter = new {{ model }}Export($data["data"]);
-            return Excel::download($exporter, "{{ title }}.xlsx");
-        }
-
-        public function exportPdf()
-        {
-            $data = $this->buildDatatable($this->buildQuery())->toArray();
-            $pdf = Pdf::loadView("{{ routeView }}.export.pdf", [
-                "records" => $data["data"],
-            ]);
-            $pdf->setPaper("a4");
-            $pdf->addInfo([
-                "Title" => "{{ title }}",
-                "Author" => config("app.company_name"),
-                "Subject" => config("app.name"),
-            ]);
-            return $pdf->stream("{{ title }}.pdf");
         }';
+
+        if ($exportExcel) {
+            $php .= '
+                private function exportExcel()
+                {
+                    $data = $this->buildDatatable($this->buildQuery())->toArray();
+                    $exporter = new {{ model }}Export($data["data"]);
+                    return Excel::download($exporter, "{{ title }}.xlsx");
+                }
+            ';
+        }
+
+        if ($exportPdf) {
+            $php .= '
+                public function exportPdf()
+                {
+                    $data = $this->buildDatatable($this->buildQuery())->toArray();
+                    $pdf = Pdf::loadView("{{ routeView }}.export.pdf", [
+                        "records" => $data["data"],
+                    ]);
+                    $pdf->setPaper("a4");
+                    $pdf->addInfo([
+                        "Title" => "{{ title }}",
+                        "Author" => config("app.company_name"),
+                        "Subject" => config("app.name"),
+                    ]);
+                    return $pdf->stream("{{ title }}.pdf");
+                }';
+        }
+
+        return $php;
     }
 
-    private function createPermission($policy, $ability) {
+    private function createPermission($policy, $ability)
+    {
         $permission = Permission::create([
             'name' => "{$policy}.{$ability}",
         ]);

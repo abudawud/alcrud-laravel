@@ -129,7 +129,7 @@
                         }
                         if (!!data.callback_function) {
                             if (typeof window[data.callback_function] === 'function') {
-                                window[data.callback_function]();
+                                window[data.callback_function](data.callback_data);
                             } else {
                               console.error('Function does not exist.');
                             }
@@ -191,7 +191,7 @@
                         }
                         if (!!data.callback_function) {
                             if (typeof window[data.callback_function] === 'function') {
-                                window[data.callback_function]();
+                                window[data.callback_function](data.callback_data);
                             } else {
                               console.error('Function does not exist.');
                             }
