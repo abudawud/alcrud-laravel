@@ -189,6 +189,9 @@
                             }
                             return;
                         }
+                        const datatableId = data.datatableId ?? '#datatable';
+                        $('#modalCRU').modal('hide');
+                        $(datatableId).DataTable().draw(false);
                         if (!!data.callback_function) {
                             if (typeof window[data.callback_function] === 'function') {
                                 window[data.callback_function](data.callback_data);
@@ -196,9 +199,6 @@
                               console.error('Function does not exist.');
                             }
                         }
-                        const datatableId = data.datatableId ?? '#datatable';
-                        $('#modalCRU').modal('hide');
-                        $(datatableId).DataTable().draw(false);
                         if (data.notification) {
                             toastr[data.notification.type](data.notification.message, data.notification.title);
                         }
