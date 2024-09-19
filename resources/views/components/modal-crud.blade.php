@@ -36,7 +36,7 @@
 @push('js')
     <script>
         $(document).ready(function() {
-            $('div.container-fluid').on('click', '.btn.modal-remote', function(e) {
+            $('div.container-fluid').on('click', '.modal-remote', function(e) {
                 e.preventDefault();
                 doXHR($(this).attr('href'), $(this).data());
             })
