@@ -28,7 +28,7 @@
             <span class="modal-message">Apakah anda yakin ingin menghapus data ini ?</span>
         </div>
         <x-slot name="footerSlot">
-            <x-adminlte-button type="submit" theme="danger" label="Hapus" />
+            <x-adminlte-button type="submit" theme="danger" label="Ya" />
         </x-slot>
     </x-adminlte-modal>
 </div>
