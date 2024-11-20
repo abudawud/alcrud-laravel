@@ -1,5 +1,6 @@
 <div>
     <x-adminlte-modal id="modalCRU" theme="primary" title="Loading...">
+        <input type="hidden" id="modalCRU-local-callback" value=""/>
         <div>
             <div class="content-loading">
                 <div class="progress">
@@ -38,6 +39,11 @@
         $(document).ready(function() {
             $('div.container-fluid').on('click', '.modal-remote', function(e) {
                 e.preventDefault();
+                let data = $(this).data();
+                const dataCallback = data.callback;
+                if (!!dataCallback && typeof window[dataCallback] === 'function') {
+                    data['extra'] = window[dataCallback](data);
+                }
                 doXHR($(this).attr('href'), $(this).data());
             })
 
@@ -52,6 +58,7 @@
                     dataType: 'json',
                     beforeSend: function() {
                         resetSize();
+                        $('#modalCRU-local-callback').val("");
                         $('#modalCRU').find('.modal-title').html("Loading...");
                         $('#modalCRU').find('.content-loading').show();
                         $('#modalCRU').find('.content-html,.content-error,.modal-footer').empty();
@@ -63,6 +70,7 @@
                         if (!!data.size) {
                             $('#modalCRU > div.modal-dialog').addClass(`modal-${data.size}`);
                         }
+                        $('#modalCRU-local-callback').val(data.local_callback);
                         $('#modalCRU').find('.modal-title').html(data.title);
                         $('#modalCRU').find('.content-loading').slideUp(200, function() {
                             $('#modalCRU').find('.content-html').html(data.content).slideDown();
@@ -172,8 +180,16 @@
                 });
             });
 
-            $('#modalCRU').on('submit', 'form', function(e) {
-                e.preventDefault();
+            function submitLocal() {
+                const localCallback = $('#modalCRU-local-callback').val();
+                const form = $('#modalCRU').find('form');
+                var data = $(form).serializeArray();
+                if (window[localCallback](data)) {
+                    $('#modalCRU').modal('hide');
+                }
+            }
+
+            function submitServer() {
                 const form = $('#modalCRU').find('form');
                 const data = form.serialize();
 
@@ -239,6 +255,16 @@
                         });
                     }
                 });
+            }
+
+            $('#modalCRU').on('submit', 'form', function(e) {
+                e.preventDefault();
+                const localCallback = $('#modalCRU-local-callback').val();
+                if (!!localCallback && typeof window[localCallback] === 'function') {
+                    submitLocal();
+                } else {
+                    submitServer();
+                }
             });
         })
     </script>
