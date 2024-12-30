@@ -83,15 +83,28 @@
                     error: function(xhr) {
                         if (xhr.status == 401) {
                             window.location.reload();
+                        } else if (xhr.status == 422) {
+                            const json = xhr.responseJSON;
+                            $('#modalCRU').find('.modal-title').html(`Error ${xhr.status}`);
+                            $('#modalCRU div.content-error').append(`<b>Data tidak valid:</b>`);
+                            $('#modalCRU div.content-error').append('<ul></ul>');
+                            Object.values(json.errors)
+                                .forEach(function(error) {
+                                    error.forEach(function(item) {
+                                        $('#modalCRU div.content-error > ul')
+                                            .append(`<li>${item}</li>`)
+                                    })
+                                })
                         } else {
                             $('#modalCRU').find('.modal-title').html(`Error ${xhr.status}`);
-                            $('#modalCRU').find('.content-loading').slideUp(200, function() {
-                                $('#modalCRU').find('.content-error').html(
-                                    `<b>${xhr.statusText} (${xhr.status})</b><p>${xhr.responseText}</p>`
-                                    ).show();
-                                $('#modalCRU').find('.content-main').slideDown();
-                            });
+                            $('#modalCRU').find('.content-error').html(
+                                `<b>${xhr.statusText} (${xhr.status})</b><p>${xhr.responseText}</p>`
+                            );
                         }
+                        $('#modalCRU').find('.content-loading').slideUp(200, function() {
+                            $('#modalCRU div.content-error').show();
+                            $('#modalCRU').find(".content-main").slideDown();
+                        });
                     }
                 });
             }
@@ -129,6 +142,9 @@
                     method: form[0].method,
                     data: data,
                     success: function(data) {
+                        if (data.notification) {
+                            toastr[data.notification.type](data.notification.message, data.notification.title);
+                        }
                         if (!!data.status_code) {
                             if (data.status_code == 302){
                                 window.location.href = data.location;
@@ -154,9 +170,6 @@
                             }
                         } else {
                             $(datatableId).DataTable().draw(false);
-                            if (data.notification) {
-                                toastr[data.notification.type](data.notification.message, data.notification.title);
-                            }
                         }
                         $('#modalD').modal('hide');
                     },
@@ -199,6 +212,9 @@
                     data: data,
                     dataType: 'json',
                     success: function(data) {
+                        if (data.notification) {
+                            toastr[data.notification.type](data.notification.message, data.notification.title);
+                        }
                         if (!!data.status_code) {
                             if (data.status_code == 302){
                                 window.location.href = data.location;
@@ -214,9 +230,6 @@
                             } else {
                               console.error('Function does not exist.');
                             }
-                        }
-                        if (data.notification) {
-                            toastr[data.notification.type](data.notification.message, data.notification.title);
                         }
                     },
                     beforeSend: function() {
