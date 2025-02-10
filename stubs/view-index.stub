@@ -78,6 +78,11 @@
               ajax: "{{ route('{{ routeView }}.index') }}",
               pageLength: 25,
               colReorder: true,
+              orderFixed: {
+                post: [
+                    [0, 'desc'],
+                ]
+              },
               order: [[0, 'desc']],
               columns: {{ columns }},
               columnDefs: [
