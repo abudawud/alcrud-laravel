@@ -215,14 +215,7 @@
                         if (data.notification) {
                             toastr[data.notification.type](data.notification.message, data.notification.title);
                         }
-                        if (!!data.status_code) {
-                            if (data.status_code == 302){
-                                window.location.href = data.location;
-                            }
-                            return;
-                        }
                         const datatableId = data.datatableId ?? '#datatable';
-                        $('#modalCRU').modal('hide');
                         $(datatableId).DataTable().draw(false);
                         if (!!data.callback_function) {
                             if (typeof window[data.callback_function] === 'function') {
@@ -231,6 +224,17 @@
                               console.error('Function does not exist.');
                             }
                         }
+                        if (!!data.status_code) {
+                            if (data.status_code == 302){
+                                if (data.location_type == 'modal') {
+                                    doXHR(data.location, data.location_data || []);
+                                } else {
+                                    window.location.href = data.location;
+                                }
+                            }
+                            return;
+                        }
+                        $('#modalCRU').modal('hide');
                     },
                     beforeSend: function() {
                         $('#modalCRU').find('.content-main').hide();
