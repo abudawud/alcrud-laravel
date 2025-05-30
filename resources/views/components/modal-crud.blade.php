@@ -216,7 +216,9 @@
                             toastr[data.notification.type](data.notification.message, data.notification.title);
                         }
                         const datatableId = data.datatableId ?? '#datatable';
-                        $(datatableId).DataTable().draw(false);
+                        if ($(datatableId).length) {
+                            $(datatableId).DataTable().draw(false);
+                        }
                         if (!!data.callback_function) {
                             if (typeof window[data.callback_function] === 'function') {
                                 window[data.callback_function](data.callback_data);
