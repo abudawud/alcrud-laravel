@@ -1,5 +1,5 @@
 <div>
-    <x-adminlte-modal style="z-index: 1062;" id="modalCRU" theme="primary" title="Loading...">
+    <x-adminlte-modal id="modalCRU" theme="primary" title="Loading...">
         <input type="hidden" id="modalCRU-local-callback" value=""/>
         <div>
             <div class="content-loading">
@@ -18,7 +18,7 @@
         </x-slot>
     </x-adminlte-modal>
 
-    <x-adminlte-modal style="z-index: 1062;" id="modalD" theme="danger" title="Hapus Data">
+    <x-adminlte-modal id="modalD" theme="danger" title="Hapus Data">
         <div id="modal-body">
             <div style="display: none" class="error-hint rounded bg-danger py-1 px-2 mb-2">
             </div>
