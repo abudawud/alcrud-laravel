@@ -1,5 +1,5 @@
 <div>
-    <x-adminlte-modal id="modalCRU" theme="primary" title="Loading...">
+    <x-adminlte-modal style="z-index: 1062;" id="modalCRU" theme="primary" title="Loading...">
         <input type="hidden" id="modalCRU-local-callback" value=""/>
         <div>
             <div class="content-loading">
@@ -18,7 +18,7 @@
         </x-slot>
     </x-adminlte-modal>
 
-    <x-adminlte-modal id="modalD" theme="danger" title="Hapus Data">
+    <x-adminlte-modal style="z-index: 1062;" id="modalD" theme="danger" title="Hapus Data">
         <div id="modal-body">
             <div style="display: none" class="error-hint rounded bg-danger py-1 px-2 mb-2">
             </div>
@@ -37,7 +37,7 @@
 @push('js')
     <script>
         $(document).ready(function() {
-            $('div.container-fluid').on('click', '.modal-remote', function(e) {
+            $('body').on('click', '.modal-remote', function(e) {
                 e.preventDefault();
                 let data = $(this).data();
                 const dataCallback = data.callback;
@@ -119,7 +119,7 @@
                 $('#modalCRU').find('form').submit();
             })
 
-            $('div.container-fluid').on('click', '.btn.btn-delete', function(e) {
+            $('body').on('click', '.btn.btn-delete,.modal-remote.btn-delete', function(e) {
                 e.preventDefault();
                 const data = $(this).data();
                 const title = data.title ?? 'Hapus Data';
